@@ -10,18 +10,21 @@ if __name__ == "__main__":
     weights_path = 'mutation_logistic_wts.h5'
 
     # load dataset
-    dataframe = pandas.read_csv('Data/test1.csv', header=None)
+    use_colomns= [i for i in range(0,34)]
+    dataframe = pandas.read_csv('Data/No_filter.csv', header=None, error_bad_lines=False, usecols=use_colomns)
     dataset = dataframe.values
 
     # split into input (X) and output (Y) variables
-    X = dataset[:, 1:].astype(float)
-    Y = dataset[:, 0].astype(int)
+    X = dataset[:, 2:33].astype(float)
+    Y = dataset[:, 1].astype(int)
 
     # choose a subset
-    x_test = X[40:50, :]  # 10 1s
-    x_test = np.append(x_test, X[90:100, :], axis=0)  # 10 0s
-    y_test = Y[40:50]
-    y_test = np.append(y_test, Y[90:100])
+    # x_test = X[40:50, :]  # 10 1s
+    # x_test = np.append(x_test, X[90:100, :], axis=0)  # 10 0s
+    # y_test = Y[40:50]
+    # y_test = np.append(y_test, Y[90:100])
+    x_test = X
+    y_test = Y
 
     input_dim = X.shape[1]
     nb_classes = 2
@@ -57,9 +60,6 @@ if __name__ == "__main__":
 
     y_pred_pos = np.round(np.clip(y_pred, 0, 1))
     y_pred_neg = 1 - y_pred_pos
-
-    # y_pos = np.round(np.clip(y_test, 0, 1))
-    y_test_neg = 1 - y_test
 
     tp = np.sum(y_test[:, 1] * y_pred_pos[:, 1])
     tn = np.sum(y_test[:, 0] * y_pred_neg[:, 0])
