@@ -44,7 +44,7 @@ def build_model(input_dim,output_dim,type,weights_path):
             model.load_weights(weights_path)
 
         model.compile(loss='binary_crossentropy',
-                      optimizer=RMSprop(),
+                      optimizer='adam',
                       metrics=['binary_accuracy'])
 
     elif type == 'ml-binary':
@@ -63,7 +63,7 @@ def build_model(input_dim,output_dim,type,weights_path):
         # Metric: binary accuracy, it calculates K.mean(K.equal(y_true, K.round(y_pred)))
         # Meaning: the mean accuracy rate across all predictions
         model.compile(loss='binary_crossentropy',
-                      optimizer=RMSprop(),
+                      optimizer='adam',
                       metrics=['binary_accuracy'])
 
     return model

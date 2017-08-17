@@ -4,6 +4,7 @@ import numpy as np
 import keras
 import pandas
 import nn
+from sklearn.preprocessing import StandardScaler
 
 if __name__ == "__main__":
     weights_path = ''
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     np.random.seed(seed)
 
     # Set tensorboard callback
-    tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log2')
+    tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
 
@@ -28,21 +29,20 @@ if __name__ == "__main__":
     X = dataset[:, 1:].astype(float)
     Y = dataset[:, 0].astype(int)
 
-    x_train = X[0:40, :]
-    x_train = np.append(x_train, X[50:120, :],axis = 0)
+    x_train = X[0:40, :]  # 40 1s
+    x_train = np.append(x_train, X[50:90, :], axis=0)  # 40 0s
     y_train = Y[0:40]
-    y_train = np.append(y_train, Y[50:120])
+    y_train = np.append(y_train, Y[50:90])
 
     #x_validate = X[300:360, :]
     #y_validate = Y[300:360]
 
-    x_test = X[40:50, :]
-    x_test = np.append(x_test, X[120:, :],axis = 0)
+    x_test = X[40:50, :]  # 10 1s
+    x_test = np.append(x_test, X[90:100, :], axis=0)  # 10 0s
     y_test = Y[40:50]
-    y_test = np.append(y_test, Y[120:])
+    y_test = np.append(y_test, Y[90:100])
 
     input_dim = x_train.shape[1]
-    output_dim = y_train.shape[0]
     nb_classes = 2
 
     batch_size = 128
@@ -62,8 +62,8 @@ if __name__ == "__main__":
     #x_validate= x_validate.astype('float32')
 
     # Normalize
-    #scalar = StandardScaler()
-    #x_train = scalar.fit_transform(x_train)
+    scalar = StandardScaler()
+    x_train = scalar.fit_transform(x_train)
 
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     #y_validate = keras.utils.to_categorical(y_validate, nb_classes)
 
     # Build the model (MLP)
-    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
 
     # Print a summary of the model
     model.summary()
@@ -88,6 +88,25 @@ if __name__ == "__main__":
 
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
+
+    # Manually calculate FN,FP,TN,TP:
+    y_pred = model.predict(x_test)
+
+    y_pred_pos = np.round(np.clip(y_pred, 0, 1))
+    y_pred_neg = 1 - y_pred_pos
+
+    y_pos = np.round(np.clip(y_test, 0, 1))
+    y_neg = 1 - y_pos
+
+    tp = np.sum(y_pos * y_pred_pos)
+    tn = np.sum(y_neg * y_pred_neg)
+
+    fp = np.sum(y_neg * y_pred_pos)
+    fn = np.sum(y_pos * y_pred_neg)
+
+    total = x_test.shape[0]
+
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total,fp/total,tn/total,fn/total))
 
     # Save model as json and yaml
     json_string = model.to_json()
