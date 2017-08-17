@@ -58,15 +58,16 @@ if __name__ == "__main__":
     y_pred_pos = np.round(np.clip(y_pred, 0, 1))
     y_pred_neg = 1 - y_pred_pos
 
-    y_pos = np.round(np.clip(y_test, 0, 1))
-    y_neg = 1 - y_pos
+    # y_pos = np.round(np.clip(y_test, 0, 1))
+    y_test_neg = 1 - y_test
 
-    tp = np.sum(y_pos * y_pred_pos)
-    tn = np.sum(y_neg * y_pred_neg)
+    tp = np.sum(y_test[:, 1] * y_pred_pos[:, 1])
+    tn = np.sum(y_test[:, 0] * y_pred_neg[:, 0])
 
-    fp = np.sum(y_neg * y_pred_pos)
-    fn = np.sum(y_pos * y_pred_neg)
+    total_pos = np.sum(y_test[:, 1])
+    total_neg = np.sum(y_test[:, 0])
 
-    total = x_test.shape[0]
+    fp = total_pos - tp
+    fn = total_neg - tn
 
-    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total,fp/total,tn/total,fn/total))
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos,fp/total_pos,tn/total_neg,fn/total_neg))
