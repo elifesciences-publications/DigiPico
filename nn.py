@@ -7,13 +7,6 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
 
-from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-
 
 def build_model(input_dim,output_dim,type,weights_path):
 
@@ -51,11 +44,11 @@ def build_model(input_dim,output_dim,type,weights_path):
         # Sigmoid used for binary classification, In logistic regression,
         # random weight initialization is not so important
         model = Sequential()
-        model.add(Dense(512, activation='relu', input_shape=(input_dim,)))
-        model.add(Dropout(0.2))
-        model.add(Dense(512, activation='relu'))
-        model.add(Dropout(0.2))
-        model.add(Dense(output_dim, activation='sigmoid'))
+        model.add(Dense(512, kernel_initializer='normal',activation='relu', input_shape=(input_dim,)))
+        model.add(Dropout(0.5))
+        model.add(Dense(512, kernel_initializer='normal',activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(output_dim, kernel_initializer='normal',activation='sigmoid'))
 
         if weights_path:
             model.load_weights(weights_path)

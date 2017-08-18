@@ -15,45 +15,48 @@ if __name__ == "__main__":
     np.random.seed(seed)
 
     # Set tensorboard callback
-    tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
+    #tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
-
-    dataframe = pandas.read_csv('Data/test1.csv', header=None)
+    # use_colomns = [i for i in range(0, 33)]
+    #dataframe = pandas.read_csv('Data/Filter_NoSort.csv', header=None, usecols=use_colomns)
+    dataframe = pandas.read_csv('Data/Filter.csv', header=None)
     dataset = dataframe.values
 
     # MNIST data, shuffled and split between train and test sets
     # (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     # split into input (X) and output (Y) variables
-    X = dataset[:, 1:].astype(float)
-    Y = dataset[:, 0].astype(int)
+    X = dataset[:, 2:].astype(float)
+    Y = dataset[:, 1].astype(int)
 
-    x_train = X[0:40, :]  # 40 1s
-    x_train = np.append(x_train, X[50:90, :], axis=0)  # 40 0s
-    y_train = Y[0:40]
-    y_train = np.append(y_train, Y[50:90])
+    X = np.nan_to_num(X)
+
+    x_train = X[0:9120]  # 9120 1s
+    x_train = np.append(x_train, X[10731:(10731+9120)], axis=0)  # 9120 0s
+    y_train = Y[0:9120]
+    y_train = np.append(y_train, Y[10731:(10731+9120)])
 
     #x_validate = X[300:360, :]
     #y_validate = Y[300:360]
 
-    x_test = X[40:50, :]  # 10 1s
-    x_test = np.append(x_test, X[90:100, :], axis=0)  # 10 0s
-    y_test = Y[40:50]
-    y_test = np.append(y_test, Y[90:100])
+    x_test = X[9120:10731]  # 15% of the other ones
+    x_test = np.append(x_test, X[(10731+9120):(10731+2*9120)], axis=0)  # 1the other zeros
+    y_test = Y[9120:10731]
+    y_test = np.append(y_test, Y[(10731+9120):(10731+2*9120)])
 
     input_dim = x_train.shape[1]
     nb_classes = 2
 
     batch_size = 128
-    epochs = 1000
+    epochs = 30
 
     # Extend the data by rotations
 
     # Preprocess input data
     # When using the Theano backend, you must explicitly declare a dimension for the depth of the input
-    x_train = x_train.reshape(x_train.shape[0], input_dim)
-    x_test = x_test.reshape(x_test.shape[0], input_dim)
+    # x_train = x_train.reshape(x_train.shape[0], input_dim)
+    # x_test = x_test.reshape(x_test.shape[0], input_dim)
     #x_validate = x_validate.reshape(x_validate.shape[0], input_dim)
 
     # Convert
@@ -62,8 +65,8 @@ if __name__ == "__main__":
     #x_validate= x_validate.astype('float32')
 
     # Normalize
-    scalar = StandardScaler()
-    x_train = scalar.fit_transform(x_train)
+    # scalar = StandardScaler()
+    # x_train = scalar.fit_transform(x_train)
 
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
@@ -74,7 +77,7 @@ if __name__ == "__main__":
     #y_validate = keras.utils.to_categorical(y_validate, nb_classes)
 
     # Build the model (MLP)
-    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
 
     # Print a summary of the model
     model.summary()
@@ -82,7 +85,7 @@ if __name__ == "__main__":
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
-                        validation_data=(x_test, y_test), callbacks=[tbCallBack])
+                        )#validation_data=(x_test, y_test))#, callbacks=[tbCallBack])
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
@@ -92,14 +95,10 @@ if __name__ == "__main__":
     # Manually calculate FN,FP,TN,TP:
     y_pred = model.predict(x_test)
 
-    y_pred_pos = np.round(np.clip(y_pred, 0, 1))
-    y_pred_neg = 1 - y_pred_pos
+    y_pred = np.round(np.clip(y_pred, 0, 1))
 
-    # y_pos = np.round(np.clip(y_test, 0, 1))
-    y_test_neg = 1 - y_test
-
-    tp = np.sum(y_test[:, 1] * y_pred_pos[:, 1])
-    tn = np.sum(y_test[:, 0] * y_pred_neg[:, 0])
+    tp = np.sum(y_test[:, 1] * y_pred[:, 1])
+    tn = np.sum(y_test[:, 0] * y_pred[:, 0])
 
     total_pos = np.sum(y_test[:, 1])
     total_neg = np.sum(y_test[:, 0])
