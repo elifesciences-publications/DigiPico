@@ -10,13 +10,13 @@ if __name__ == "__main__":
     weights_path = 'mutation_logistic_wts.h5'
 
     # load dataset
-    use_colomns= [i for i in range(0,34)]
-    dataframe = pandas.read_csv('Data/No_filter.csv', header=None, error_bad_lines=False, usecols=use_colomns)
+    use_colomns= [i for i in range(0,32)]
+    dataframe = pandas.read_csv('Data/test1.csv', header=None, error_bad_lines=False, usecols=use_colomns)
     dataset = dataframe.values
 
     # split into input (X) and output (Y) variables
-    X = dataset[:, 2:33].astype(float)
-    Y = dataset[:, 1].astype(int)
+    X = dataset[:, 1:].astype(float)
+    Y = dataset[:, 0].astype(int)
 
     # choose a subset
     # x_test = X[40:50, :]  # 10 1s
@@ -51,6 +51,7 @@ if __name__ == "__main__":
     model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
 
     score = model.evaluate(x_test, y_test, verbose=0)
+    print(y_test)
 
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
@@ -58,11 +59,10 @@ if __name__ == "__main__":
     # Manually calculate FN,FP,TN,TP:
     y_pred = model.predict(x_test)
 
-    y_pred_pos = np.round(np.clip(y_pred, 0, 1))
-    y_pred_neg = 1 - y_pred_pos
+    y_pred = np.round(np.clip(y_pred, 0, 1))
 
-    tp = np.sum(y_test[:, 1] * y_pred_pos[:, 1])
-    tn = np.sum(y_test[:, 0] * y_pred_neg[:, 0])
+    tp = np.sum(y_test[:, 1] * y_pred[:, 1])
+    tn = np.sum(y_test[:, 0] * y_pred[:, 0])
 
     total_pos = np.sum(y_test[:, 1])
     total_neg = np.sum(y_test[:, 0])
@@ -71,3 +71,18 @@ if __name__ == "__main__":
     fn = total_neg - tn
 
     print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos,fp/total_pos,tn/total_neg,fn/total_neg))
+
+
+def precision_func(y_true, y_pred):
+    """Precision metric.
+
+       Only computes a batch-wise average of precision.
+
+       Computes the precision, a metric for multi-label classification of
+       how many selected items are relevant.
+       """
+    true_positives = np.sum(np.round(np.clip(y_true * y_pred, 0, 1)))
+    print(true_positives)
+    predicted_positives = np.sum(np.round(np.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives)
+    return precision
