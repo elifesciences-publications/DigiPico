@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # load dataset
     # use_colomns = [i for i in range(0, 33)]
     #dataframe = pandas.read_csv('Data/Filter_NoSort.csv', header=None, usecols=use_colomns)
-    dataframe = pandas.read_csv('Data/Filter.csv', header=None)
+    dataframe = pandas.read_csv('Data/Filter_Mean_Mid_Var.csv', header=None)
     dataset = dataframe.values
 
     # MNIST data, shuffled and split between train and test sets
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #y_validate = keras.utils.to_categorical(y_validate, nb_classes)
 
     # Build the model (MLP)
-    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
 
     # Print a summary of the model
     model.summary()

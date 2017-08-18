@@ -10,8 +10,8 @@ if __name__ == "__main__":
     weights_path = 'mutation_logistic_wts.h5'
 
     # load dataset
-    use_names = list(range(0,740))
-    dataframe = pandas.read_csv('Data/No_filter.csv', header=None, names=use_names)
+    use_names = list(range(0, 740))
+    dataframe = pandas.read_csv('Data/Filter.csv', header=None, names=use_names)
     # dataframe = pandas.read_csv('Data/Filter_NoSort.csv', header=None)
     dataset = dataframe.values
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     y_test = keras.utils.to_categorical(y_test, nb_classes)
 
     # Build the model & load the weights
-    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
@@ -73,4 +73,4 @@ if __name__ == "__main__":
     fp = total_pos - tp
     fn = total_neg - tn
 
-    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos,fp/total_pos,tn/total_neg,fn/total_neg))
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos, fp/total_pos, tn/total_neg, fn/total_neg))
