@@ -5,6 +5,7 @@ import keras
 import pandas
 import nn
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 
 if __name__ == "__main__":
     weights_path = ''
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     # load dataset
     # use_colomns = [i for i in range(0, 33)]
     #dataframe = pandas.read_csv('Data/Filter_NoSort.csv', header=None, usecols=use_colomns)
-    dataframe = pandas.read_csv('Data/Filter_Mean_Mid_Var.csv', header=None)
+    dataframe = pandas.read_csv('Data/Filter.csv', header=None)
     dataset = dataframe.values
 
     # MNIST data, shuffled and split between train and test sets
@@ -32,10 +33,17 @@ if __name__ == "__main__":
 
     X = np.nan_to_num(X)
 
+    over_sample_rate = 1
     x_train = X[0:9120]  # 9120 1s
-    x_train = np.append(x_train, X[10731:(10731+9120)], axis=0)  # 9120 0s
+    x_train = np.tile(x_train, (over_sample_rate, 1))
+    x_train = np.append(x_train, X[10731:(10731+over_sample_rate*9120)], axis=0)  # 9120 0s
     y_train = Y[0:9120]
-    y_train = np.append(y_train, Y[10731:(10731+9120)])
+    y_train = np.tile(y_train, (over_sample_rate, 1))
+    y_train = np.append(y_train, Y[10731:(10731+over_sample_rate*9120)])
+
+
+    # Shuffle the training data
+    x_train, y_train = shuffle(x_train, y_train, random_state = 0)
 
     #x_validate = X[300:360, :]
     #y_validate = Y[300:360]
@@ -49,7 +57,7 @@ if __name__ == "__main__":
     nb_classes = 2
 
     batch_size = 128
-    epochs = 30
+    epochs = 2 
 
     # Extend the data by rotations
 
@@ -77,7 +85,7 @@ if __name__ == "__main__":
     #y_validate = keras.utils.to_categorical(y_validate, nb_classes)
 
     # Build the model (MLP)
-    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
 
     # Print a summary of the model
     model.summary()
@@ -85,7 +93,7 @@ if __name__ == "__main__":
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
-                        )#validation_data=(x_test, y_test))#, callbacks=[tbCallBack])
+                        validation_data=(x_test, y_test))#, callbacks=[tbCallBack])
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
@@ -106,7 +114,11 @@ if __name__ == "__main__":
     fp = total_pos - tp
     fn = total_neg - tn
 
-    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos,fp/total_pos,tn/total_neg,fn/total_neg))
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos, fp/total_pos, tn/total_neg, fn/total_neg))
+
+    # Weighted Over_Sampling for a re-train:
+    # Find the false-negatives and sample from them:
+    # fn_array = y_test[:, 1] * y_pred[:, 0]
 
     # Save model as json and yaml
     json_string = model.to_json()
