@@ -11,12 +11,12 @@ if __name__ == "__main__":
 
     # load dataset
     use_names = list(range(0, 740))
-    dataframe = pandas.read_csv('Data/Filter.csv', header=None, names=use_names)
+    dataframe = pandas.read_csv('Data/Filter_Mean_Mid_Var.csv', header=None, names=use_names)
     # dataframe = pandas.read_csv('Data/Filter_NoSort.csv', header=None)
     dataset = dataframe.values
 
     # split into input (X) and output (Y) variables
-    X = dataset[:, 2:].astype(float)
+    X = dataset[:, 2:33].astype(float)
     Y = dataset[:, 1].astype(int)
 
     X = np.nan_to_num(X)
@@ -26,12 +26,12 @@ if __name__ == "__main__":
     # x_test = np.append(x_test, X[90:100, :], axis=0)  # 10 0s
     # y_test = Y[40:50]
     # y_test = np.append(y_test, Y[90:100])
-    x_test = X
-    y_test = Y
-    # x_test = X[9120:10731, :]  # 15% of the other ones
-    # x_test = np.append(x_test, X[(10731 + 9120):, :], axis=0)  # 1the other zeros
-    # y_test = Y[9120:10731]
-    # y_test = np.append(y_test, Y[(10731 + 9120):])
+    #x_test = X
+    #y_test = Y
+    x_test = X[9120:10731]  # 15% of the other ones
+    x_test = np.append(x_test, X[(10731+9120):(10731+2*9120)], axis=0)  # 1the other zeros
+    y_test = Y[9120:10731]
+    y_test = np.append(y_test, Y[(10731+9120):(10731+2*9120)])
 
     input_dim = X.shape[1]
     nb_classes = 2
@@ -49,10 +49,12 @@ if __name__ == "__main__":
     print(x_test.shape[0], 'test samples')
 
     # Convert class vectors to binary class matrices
-    y_test = keras.utils.to_categorical(y_test, nb_classes)
+    # y_test = keras.utils.to_categorical(y_test, nb_classes)
 
     # Build the model & load the weights
-    model = nn.build_model(input_dim, nb_classes, type='ml-binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes, type='binary', weights_path=weights_path)
+
+    print(model.get_weights())
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
@@ -74,3 +76,5 @@ if __name__ == "__main__":
     fn = total_neg - tn
 
     print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp/total_pos, fp/total_pos, tn/total_neg, fn/total_neg))
+
+    print(np.equal(y_test, y_pred))

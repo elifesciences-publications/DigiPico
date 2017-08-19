@@ -44,11 +44,13 @@ def build_model(input_dim,output_dim,type,weights_path):
         # Sigmoid used for binary classification, In logistic regression,
         # random weight initialization is not so important
         model = Sequential()
-        model.add(Dense(700, kernel_initializer='normal',activation='relu', input_shape=(input_dim,)))
+        model.add(Dense(70, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
         model.add(Dropout(0.5))
-        model.add(Dense(512, kernel_initializer='normal',activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(output_dim, kernel_initializer='normal',activation='sigmoid'))
+        # model.add(Dense(15, kernel_initializer='normal', activation='relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(10, kernel_initializer='normal', activation='relu'))
+        # model.add(Dropout(0.2))
+        model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 
         if weights_path:
             model.load_weights(weights_path)
