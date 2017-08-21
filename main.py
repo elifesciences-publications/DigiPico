@@ -18,24 +18,26 @@ if __name__ == "__main__":
     batch_size = 128
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
-    epochs = 10
-    over_sampling_rate = 5
+    epochs = 40
+    over_sampling_rate = 1  # ATTENTION: MAX 8 in current set
 
     # Set tensorboard callback
     #tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
-    x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Filter_Mean_Mid_Var.csv', over_sampling_rate)
+    x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv',
+                                                            'Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
     input_dim = x_train.shape[1]
     # Extend the data by rotations
     # Convert
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
-    #x_validate= x_validate.astype('float32')
     # Normalize
     # scalar = StandardScaler()
     # x_train = scalar.fit_transform(x_train)
     # x_test = scalar.fit_transform(x_test)
+    # x_train[11:] = scalar.fit_transform(x_train[11:])
+    # x_test[11:] = scalar.fit_transform(x_test[11:])
 
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
@@ -49,7 +51,7 @@ if __name__ == "__main__":
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
-                        validation_data=(x_test, y_test))  # , callbacks=[tbCallBack])
+                        )#validation_data=(x_test, y_test))  # , callbacks=[tbCallBack])
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
@@ -68,13 +70,14 @@ if __name__ == "__main__":
     tp = np.sum(y_pos * y_pred_pos)
     tn = np.sum(y_neg * y_pred_neg)
 
-    fp = np.sum(y_pos * y_pred_neg)
-    fn = np.sum(y_neg * y_pred_pos)
+    fn = np.sum(y_pos * y_pred_neg)
+    fp = np.sum(y_neg * y_pred_pos)
 
     total_pos = np.sum(y_pos)
     total_neg = np.sum(y_neg)
 
-    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp / total_pos, fp / total_pos, tn / total_neg, fn / total_neg))
+    print('TP: {}%, FP: {}%, TN: {}%, FN: {}%'.format(tp / total_pos, fp / total_pos, tn / total_neg, fn / total_neg))
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp, fp, tn, fn))
 
     # Save model as json and yaml
     json_string = model.to_json()
@@ -85,13 +88,3 @@ if __name__ == "__main__":
     # save the weights in h5 format
     model.save_weights('mutation_logistic_wts.h5')
 
-
-    # Use scikit for training:
-    # evaluate model with standardized dataset
-    # estimators = []
-    # estimators.append(('standardize', StandardScaler()))
-    # estimators.append(('mlp', KerasClassifier(build_fn=build_model(input_dim, nb_classes, type='binary'), epochs=100, batch_size=5, verbose=0)))
-    # pipeline = Pipeline(estimators)
-    # kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
-    # results = cross_val_score(pipeline, X, Y, cv=kfold)
-    # print("Results: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))

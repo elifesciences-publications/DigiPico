@@ -4,8 +4,8 @@ import pandas
 
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop
+from keras.layers import Dense, Dropout, Activation
+from keras.optimizers import RMSprop, SGD
 
 
 def build_model(input_dim,output_dim,type,weights_path):
@@ -44,13 +44,41 @@ def build_model(input_dim,output_dim,type,weights_path):
         # Sigmoid used for binary classification, In logistic regression,
         # random weight initialization is not so important
         model = Sequential()
-        model.add(Dense(70, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
-        model.add(Dropout(0.5))
-        # model.add(Dense(15, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(input_dim, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
         # model.add(Dropout(0.5))
+        model.add(Dense(40, kernel_initializer='normal', activation='relu'))
+        #model.add(Dropout(0.5))
+        model.add(Dense(int(input_dim/2), kernel_initializer='normal', activation='relu'))
         # model.add(Dense(10, kernel_initializer='normal', activation='relu'))
-        # model.add(Dropout(0.2))
+        #model.add(Dropout(0.2))
+        #model.add(Dense(15, kernel_initializer='normal', activation='relu'))
         model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
+
+        if weights_path:
+            model.load_weights(weights_path)
+
+        # Metric: binary accuracy, it calculates K.mean(K.equal(y_true, K.round(y_pred)))
+        # Meaning: the mean accuracy rate across all predictions
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['binary_accuracy'])
+
+
+    elif type == 'car':
+        model = Sequential()
+        # First layer.
+        model.add(Dense(
+            64, init='lecun_uniform', input_shape=(input_dim,)
+        ))
+        model.add(Activation('relu'))
+        #model.add(Dropout(0.2))
+
+        # Second layer.
+        model.add(Dense(64, init='lecun_uniform'))
+        model.add(Activation('relu'))
+        #model.add(Dropout(0.2))
+
+        model.add(Dense(output_dim, kernel_initializer='lecun_uniform', activation='sigmoid'))
 
         if weights_path:
             model.load_weights(weights_path)

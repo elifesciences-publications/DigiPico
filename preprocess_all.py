@@ -10,19 +10,15 @@ def prep_data(path_train, path_test, over_sample_rate):
     seed = 7
     np.random.seed(seed)
 
-    # use_colomns = [i for i in range(0, 33)]
-    # dataframe = pandas.read_csv(path, header=None, usecols=use_colomns)
     dataframe = pandas.read_csv(path_train, header=None)
     dataset = dataframe.values
     feature_begin = 2
-    feature_end = 52
+    feature_end = 65
     binary_flag = 14
     print(dataframe.columns[dataframe.isnull().any()].tolist())
     # split into input (X) and output (Y) variables
     X = dataset[:, np.r_[feature_begin:feature_end]].astype(float)  # If used,33: in mlp, reduce neurons
-    # X = dataset[:, np.r_[5:15]].astype(float)  # If used,33: in mlp, reduce neurons
     Y = dataset[:, 1].astype(int)
-
     # X = np.nan_to_num(X)
 
     # ASSUME DATA IS SORTED
