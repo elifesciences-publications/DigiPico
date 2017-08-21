@@ -4,7 +4,7 @@ import pandas
 from sklearn.utils import shuffle
 
 
-def prep_data(path_train, path_test, over_sample_rate):
+def prep_data_all(path_train, path_test, over_sample_rate):
 
     # fix random seed for reproducibility
     seed = 7
@@ -13,9 +13,9 @@ def prep_data(path_train, path_test, over_sample_rate):
     dataframe = pandas.read_csv(path_train, header=None)
     dataset = dataframe.values
     feature_begin = 2
-    feature_end = 65
-    binary_flag = 14
-    print(dataframe.columns[dataframe.isnull().any()].tolist())
+    final_col = int((dataframe.columns[dataframe.isnull().any()].tolist())[0]) # If final col is null, take it out
+    feature_end = final_col - 1
+
     # split into input (X) and output (Y) variables
     X = dataset[:, np.r_[feature_begin:feature_end]].astype(float)  # If used,33: in mlp, reduce neurons
     Y = dataset[:, 1].astype(int)
@@ -23,49 +23,45 @@ def prep_data(path_train, path_test, over_sample_rate):
 
     # ASSUME DATA IS SORTED
     positive_num = np.count_nonzero(Y)
-    positive_num_train = int(1.0 * positive_num)
 
+    X_pos = X[0:positive_num, :]
+    Y_pos = Y[0:positive_num]
+
+    X_neg = X[positive_num:, :]
+    Y_neg = Y[positive_num:]
+
+    # Shuffle so that not all are taken from same chromosomes
+    X_pos, Y_pos = shuffle(X_pos, Y_pos, random_state=2)
+    X_neg, Y_neg = shuffle(X_neg, Y_neg, random_state=3)
+
+    train_ratio = 0.85
     pb = 0
-    pe = positive_num_train
-    pnum = positive_num_train * over_sample_rate
-    nb = positive_num
-    ne = nb + pnum  # in order to have same number of negatives as positives
+    pe = int(train_ratio * positive_num)
+    pnum = pe * over_sample_rate
+    nb = 0
+    ne = pnum  # If over sample rate = 1, this would be equal to number of 1s
 
-    if ne > Y.shape[0]:
+    if ne > Y.shape[0]:  # Just to make sure over sampling rate doesn't exceed the number of zeros
         ne = Y.shape[0]
-        print('NE greated than limit!')
+        print('NE greater than limit!')
 
-    # pb_test = pe
-    # pe_test = nb
-    # nb_test = ne
-    # ne_test = nb_test + (pe_test - pb_test)  # in order to have same number of positives
-
-    x_train = X[pb:pe, :]  # 9120 1s
+    x_train = X_pos[pb:pe, :]
     x_train = np.tile(x_train, (over_sample_rate, 1))  # Over_sample positives
-    x_train = np.append(x_train, X[nb:ne, :], axis=0)  # 9120 0s
-    y_train = Y[pb:pe]
+    x_train = np.append(x_train, X_neg[nb:ne, :], axis=0)
+    y_train = Y_pos[pb:pe]
     y_train = np.tile(y_train, (over_sample_rate, 1))
-    y_train = np.append(y_train, Y[nb:ne])
+    y_train = np.append(y_train, Y_neg[nb:ne])
 
-    # Shuffle the training data
+    # Shuffle the training data so 1 and 0 are not together
     x_train, y_train = shuffle(x_train, y_train, random_state=0)
 
-    dataframe_test = pandas.read_csv(path_test, header=None)
-    dataset_test = dataframe_test.values
+    # Now add all the rest of 0 and 1s to create the test set
+    x_test = X_pos[pe:, :]
+    y_test = Y_pos[pe:]
+    x_test = np.append(x_test, X_neg[ne:, :], axis=0)
+    y_test = np.append(y_test, Y_neg[ne:], axis=0)
 
-    # split into input (X) and output (Y) variables
-    x_test = dataset_test[:, np.r_[feature_begin:feature_end]].astype(float)  # If used,33: in mlp, reduce neurons
-    # x_test = dataset_test[:, np.r_[5:15]].astype(float)  # If used,33: in mlp, reduce neurons
-    y_test = dataset_test[:, 1].astype(int)
-
-    # x_test = np.nan_to_num(x_test)
-
-    #
-    # # Take out the test data
-    # x_test = X[pb_test:pe_test, :]  # 15% of the other ones
-    # x_test = np.append(x_test, X[nb_test:ne_test, :], axis=0)  # 1the other zeros
-    # y_test = Y[pb_test:pe_test]
-    # y_test = np.append(y_test, Y[nb_test:ne_test])
+    x_test, y_test = shuffle(x_test, y_test, random_state=5)
 
     return x_train, y_train, x_test, y_test
 
