@@ -144,14 +144,15 @@ def prep_data_all(path_train, over_sample_rate):
 
 
 # x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
-def iter_loadtxt(filename, usecols, delimiter=',', skiprows=0, dtype=np.float32):
+def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
     def iter_func():
         with open(filename, 'r') as infile:
             for _ in range(skiprows):
                 next(infile)
             for line in infile:
                 line = line.rstrip().split(delimiter)
-                line = [line[i]for i in usecols]
+                if usecols is not None:
+                    line = [line[i]for i in usecols]
                 for item in line:
                     yield dtype(item)
         iter_loadtxt.rowlength = len(line)
@@ -166,7 +167,8 @@ def prep_data_all_2(path_train, over_sample_rate):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-    cols = range(1, 66)
+    cols = range(1, 67)
+    # cols = range(1, 33)
     # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
@@ -210,14 +212,27 @@ def prep_data_all_2(path_train, over_sample_rate):
     x_test = test_data[:, 1:]
     y_test = test_data[:, 0]
 
-    # np.savetxt("x_train.csv", x_train, delimiter=",")
-    # np.savetxt("y_train.csv", y_train, delimiter=",")
-    # np.savetxt("x_test.csv", x_test, delimiter=",")
-    # np.savetxt("y_test.csv", y_test, delimiter=",")
+    np.savetxt("x_train.csv", x_train, delimiter=",")
+    np.savetxt("y_train.csv", y_train, delimiter=",")
+    np.savetxt("x_test.csv", x_test, delimiter=",")
+    np.savetxt("y_test.csv", y_test, delimiter=",")
     print("Data Preparation Done!")
     return x_train, y_train, x_test, y_test
 
 
 # x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
 
+def load_preprocessed_data():
 
+    x_train = iter_loadtxt('x_train.csv')
+    y_train = iter_loadtxt('y_train.csv')
+    x_test = iter_loadtxt('x_test.csv')
+    y_test = iter_loadtxt('y_test.csv')
+
+    y_train = np.reshape(y_train, y_train.shape[0], 1)
+    y_test = np.reshape(y_test, y_test.shape[0], 1)
+
+    return x_train, y_train, x_test, y_test
+
+if __name__ == "__main__":
+    prep_data_all_2('Sahand_All_No-Filter.csv.csv', 1)

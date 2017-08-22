@@ -26,12 +26,13 @@ if __name__ == "__main__":
 
     # load dataset
     # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv','Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
-    x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Sahand_All_No-Filter.csv', over_sampling_rate)
+    x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Filter.csv', over_sampling_rate)
+    # x_train, y_train, x_test, y_test = preprocess.load_preprocessed_data()
     input_dim = x_train.shape[1]
     # Extend the data by rotations
     # Convert
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
+    # x_train = x_train.astype('float32')
+    # x_test = x_test.astype('float32')
     # Normalize
     # scalar = StandardScaler()
     # x_train = scalar.fit_transform(x_train)
