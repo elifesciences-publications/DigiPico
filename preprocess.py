@@ -167,7 +167,7 @@ def prep_data_all_2(path_train, over_sample_rate):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-    cols = range(1, 67)
+    cols = range(1, 66)
     # cols = range(1, 33)
     # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
@@ -235,4 +235,4 @@ def load_preprocessed_data():
     return x_train, y_train, x_test, y_test
 
 if __name__ == "__main__":
-    prep_data_all_2('Sahand_All_No-Filter.csv.csv', 1)
+    prep_data_all_2('Sahand_All_No-Filter.csv', 1)

@@ -15,7 +15,7 @@ if __name__ == "__main__":
     seed = 7
     np.random.seed(seed)
     nb_classes = 2
-    batch_size = 128
+    batch_size = 1280
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
     epochs = 1
@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
     # load dataset
     # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv','Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
-    x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Filter.csv', over_sampling_rate)
-    # x_train, y_train, x_test, y_test = preprocess.load_preprocessed_data()
+    # x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Sahand_All_No-Filter.csv', over_sampling_rate)
+    x_train, y_train, x_test, y_test = preprocess.load_preprocessed_data()
     input_dim = x_train.shape[1]
     # Extend the data by rotations
     # Convert
