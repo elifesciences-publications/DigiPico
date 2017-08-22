@@ -144,6 +144,21 @@ def prep_data_all(path_train, over_sample_rate):
 
 
 # x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
+def iter_loadtxt(filename, usecols, delimiter=',', skiprows=0, dtype=np.float32):
+    def iter_func():
+        with open(filename, 'r') as infile:
+            for _ in range(skiprows):
+                next(infile)
+            for line in infile:
+                line = line.rstrip().split(delimiter)
+                line = [line[i]for i in usecols]
+                for item in line:
+                    yield dtype(item)
+        iter_loadtxt.rowlength = len(line)
+
+    data = np.fromiter(iter_func(), dtype=dtype)
+    data = data.reshape((-1, iter_loadtxt.rowlength))
+    return data
 
 
 def prep_data_all_2(path_train, over_sample_rate):
@@ -151,8 +166,9 @@ def prep_data_all_2(path_train, over_sample_rate):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-
-    dataset = np.genfromtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 52))
+    cols = range(1, 66)
+    # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
+    dataset = iter_loadtxt(path_train, usecols=cols)
     feature_begin = 1
     feature_end = 51  # final_col - 1
 
