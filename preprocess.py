@@ -169,6 +169,7 @@ def prep_data_all_2(path_train, over_sample_rate):
     cols = range(1, 66)
     # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
+    print("Loading Data Done!")
     feature_begin = 1
     feature_end = 51  # final_col - 1
 
@@ -209,11 +210,11 @@ def prep_data_all_2(path_train, over_sample_rate):
     x_test = test_data[:, 1:]
     y_test = test_data[:, 0]
 
-    np.savetxt("x_train.csv", x_train, delimiter=",")
-    np.savetxt("y_train.csv", y_train, delimiter=",")
-    np.savetxt("x_test.csv", x_test, delimiter=",")
-    np.savetxt("y_test.csv", y_test, delimiter=",")
-
+    # np.savetxt("x_train.csv", x_train, delimiter=",")
+    # np.savetxt("y_train.csv", y_train, delimiter=",")
+    # np.savetxt("x_test.csv", x_test, delimiter=",")
+    # np.savetxt("y_test.csv", y_test, delimiter=",")
+    print("Data Preparation Done!")
     return x_train, y_train, x_test, y_test
 
 
