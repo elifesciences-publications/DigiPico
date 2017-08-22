@@ -4,7 +4,8 @@ import pandas
 
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout, Activation, Flatten, MaxPooling1D
+from keras.layers.convolutional import Conv1D
 from keras.optimizers import RMSprop, SGD
 
 
@@ -62,6 +63,17 @@ def build_model(input_dim,output_dim,type,weights_path):
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
                       metrics=['binary_accuracy'])
+
+    elif type == 'cnn':
+        model = Sequential()
+        model.add(Conv1D(filters=32, kernel_size=3, padding='same', activation='relu', input_shape=(input_dim,)))
+        # model.add(MaxPooling1D(pool_size=2))
+        #model.add(Dropout(0.2))
+        # model.add(Flatten())
+        model.add(Dense(128, activation='relu'))
+        model.add(Dense(output_dim, activation='softmax'))
+        # Compile model
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
     elif type == 'car':

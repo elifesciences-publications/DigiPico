@@ -80,15 +80,17 @@ def prep_data_all(path_train, over_sample_rate):
     seed = 7
     np.random.seed(seed)
 
-    dataframe = pandas.read_csv(path_train, header=None, dtype=float, usecols=range(1, 67))
-    dataset = dataframe.values
-    feature_begin = 2
-    final_col = int((dataframe.columns[dataframe.isnull().any()].tolist())[0]) # If final col is null, take it out
-    feature_end = final_col - 1
+    # dataframe = pandas.read_csv(path_train, header=None, dtype=float, usecols=range(1, 53))
+    # dataset = dataframe.values
+
+    dataset = np.genfromtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 53))
+    feature_begin = 1
+    # final_col = int((dataframe.columns[dataframe.isnull().any()].tolist())[0])  # If final col is null, take it out
+    feature_end = 51 # final_col - 1
 
     # split into input (X) and output (Y) variables
     X = dataset[:, np.r_[feature_begin:feature_end]].astype(float)  # If used,33: in mlp, reduce neurons
-    Y = dataset[:, 1].astype(int)
+    Y = dataset[:, 0].astype(int)
     # X = np.nan_to_num(X)
 
     # ASSUME DATA IS SORTED
@@ -141,7 +143,64 @@ def prep_data_all(path_train, over_sample_rate):
     return x_train, y_train, x_test, y_test
 
 
-x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
+# x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
 
+
+def prep_data_all_2(path_train, over_sample_rate):
+
+    # fix random seed for reproducibility
+    seed = 7
+    np.random.seed(seed)
+
+    dataset = np.genfromtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 52))
+    feature_begin = 1
+    feature_end = 51  # final_col - 1
+
+    positive_num = np.count_nonzero(dataset[:, 0])
+
+    data_pos = dataset[0:positive_num, :]
+    data_neg = dataset[positive_num:, :]
+
+    # Shuffling to put different chromosomes together
+    data_pos = shuffle(data_pos, random_state=3)
+    data_neg = shuffle(data_neg, random_state=6)
+
+    train_ratio = 0.85
+    pb = 0
+    pe = int(train_ratio * positive_num)
+    pnum = pe * over_sample_rate
+    nb = 0
+    ne = pnum  # If over sample rate = 1, this would be equal to number of 1s
+
+    if ne > dataset.shape[0]:  # Just to make sure over sampling rate doesn't exceed the number of zeros
+        ne = dataset.shape[0]
+        print('NE greater than limit!')
+
+    train_data = data_pos[pb:pe, :]
+    train_data = np.tile(train_data, (over_sample_rate, 1))
+    train_data = np.append(train_data, data_neg[nb:ne, :], axis=0)
+
+    # Shuffle the training data so 1 and 0 are not together
+    train_data = shuffle(train_data, random_state=0)
+
+    x_train = train_data[:, 1:]
+    y_train = train_data[:, 0]
+
+    # Now add all the rest of 0 and 1s to create the test set
+    test_data = data_pos[pe:, :]
+    test_data = np.append(test_data, data_neg[ne:, :], axis=0)
+
+    x_test = test_data[:, 1:]
+    y_test = test_data[:, 0]
+
+    np.savetxt("x_train.csv", x_train, delimiter=",")
+    np.savetxt("y_train.csv", y_train, delimiter=",")
+    np.savetxt("x_test.csv", x_test, delimiter=",")
+    np.savetxt("y_test.csv", y_test, delimiter=",")
+
+    return x_train, y_train, x_test, y_test
+
+
+# x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
 
 
