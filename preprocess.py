@@ -162,13 +162,23 @@ def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.flo
     return data
 
 
+def generate_arrays_from_file(usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
+    with open('Data/Filter.csv', 'r') as infile:
+        for line in infile:
+            line = line.rstrip().split(delimiter)
+            y = np.array([dtype(line[1])])
+            line = [line[i]for i in range(2, 33)]
+            line = np.reshape(line, (-1, 31))
+            yield (line, y)
+
+
 def prep_data_all_2(path_train, over_sample_rate):
 
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
+    # cols = range(1, 66)
     cols = range(1, 66)
-    # cols = range(1, 33)
     # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
@@ -216,6 +226,7 @@ def prep_data_all_2(path_train, over_sample_rate):
     np.savetxt("y_train.csv", y_train, delimiter=",")
     np.savetxt("x_test.csv", x_test, delimiter=",")
     np.savetxt("y_test.csv", y_test, delimiter=",")
+
     print("Data Preparation Done!")
     return x_train, y_train, x_test, y_test
 

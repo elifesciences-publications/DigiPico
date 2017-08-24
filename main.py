@@ -15,20 +15,21 @@ if __name__ == "__main__":
     seed = 7
     np.random.seed(seed)
     nb_classes = 2
-    batch_size = 1280
+    batch_size = 128
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
-    epochs = 1
-    over_sampling_rate = 1  # ATTENTION: MAX 8 in current set
+    epochs = 10
+    over_sampling_rate = 3  # ATTENTION: MAX 8 in current set
 
     # Set tensorboard callback
     #tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
     # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv','Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
-    # x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Sahand_All_No-Filter.csv', over_sampling_rate)
-    x_train, y_train, x_test, y_test = preprocess.load_preprocessed_data()
+    x_train, y_train, x_test, y_test = preprocess.prep_data_all_2('Data/Sahand_All_No-Filter.csv', over_sampling_rate)
+    # x_train, y_train, x_test, y_test = preprocess.load_preprocessed_data()
     input_dim = x_train.shape[1]
+    steps_per_epoch = int(x_train.shape[0] / batch_size)
     # Extend the data by rotations
     # Convert
     # x_train = x_train.astype('float32')
@@ -53,6 +54,9 @@ if __name__ == "__main__":
                         epochs=epochs,
                         verbose=1,
                         )#validation_data=(x_test, y_test))  # , callbacks=[tbCallBack])
+
+    # model.fit_generator(preprocess.generate_arrays_from_file(),
+    #                     steps_per_epoch=batch_size, nb_epoch=epochs)
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
