@@ -2,10 +2,10 @@ from __future__ import print_function
 import numpy as np
 import pandas
 from sklearn.utils import shuffle
+import linecache
 
 
 def prep_data(path_train, path_test, over_sample_rate):
-
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
@@ -143,7 +143,29 @@ def prep_data_all(path_train, over_sample_rate):
     return x_train, y_train, x_test, y_test
 
 
-# x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
+def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
+    batch_counter = 0
+    if usecols is None:
+        usecols = range(1, feature_size+1)
+        x_set = np.zeros([batch_size, feature_size])
+        y_set = np.zeros([batch_size, 1])
+    else:
+        x_set = np.zeros([batch_size, len(usecols)+1])
+        y_set = np.zeros([batch_size, 1])
+    with open(filename, 'r') as train_file:
+        for line in train_file:
+                batch_counter += 1
+                line = line.rstrip().split(delimiter)
+                y = np.array([dtype(line[0])])
+                x = [dtype(line[k]) for k in usecols]
+                x = np.reshape(x, (-1, len(x)))
+                x_set[batch_counter - 1] = x
+                y_set[batch_counter - 1] = y
+                if batch_counter == batch_size:
+                    batch_counter = 0
+                    yield (x_set, y_set)
+
+
 def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
     def iter_func():
         with open(filename, 'r') as infile:
@@ -162,23 +184,13 @@ def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.flo
     return data
 
 
-def generate_arrays_from_file(usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
-    with open('Data/Filter.csv', 'r') as infile:
-        for line in infile:
-            line = line.rstrip().split(delimiter)
-            y = np.array([dtype(line[1])])
-            line = [line[i]for i in range(2, 33)]
-            line = np.reshape(line, (-1, 31))
-            yield (line, y)
-
-
 def prep_data_all_2(path_train, over_sample_rate):
 
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
     # cols = range(1, 66)
-    cols = range(1, 66)
+    cols = range(1, 33)
     # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
@@ -212,33 +224,25 @@ def prep_data_all_2(path_train, over_sample_rate):
     # Shuffle the training data so 1 and 0 are not together
     train_data = shuffle(train_data, random_state=0)
 
-    x_train = train_data[:, 1:]
-    y_train = train_data[:, 0]
-
     # Now add all the rest of 0 and 1s to create the test set
     test_data = data_pos[pe:, :]
     test_data = np.append(test_data, data_neg[ne:, :], axis=0)
 
-    x_test = test_data[:, 1:]
-    y_test = test_data[:, 0]
-
-    np.savetxt("x_train.csv", x_train, delimiter=",")
-    np.savetxt("y_train.csv", y_train, delimiter=",")
-    np.savetxt("x_test.csv", x_test, delimiter=",")
-    np.savetxt("y_test.csv", y_test, delimiter=",")
+    np.savetxt("test.csv", test_data, delimiter=",")
+    np.savetxt("train.csv", train_data, delimiter=",")
 
     print("Data Preparation Done!")
-    return x_train, y_train, x_test, y_test
+    return train_data, test_data
 
 
 # x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
 
-def load_preprocessed_data():
+def load_preprocessed_data(folder=''):
 
-    x_train = iter_loadtxt('x_train.csv')
-    y_train = iter_loadtxt('y_train.csv')
-    x_test = iter_loadtxt('x_test.csv')
-    y_test = iter_loadtxt('y_test.csv')
+    x_train = iter_loadtxt(folder + 'x_train.csv')
+    y_train = iter_loadtxt(folder + 'y_train.csv')
+    x_test = iter_loadtxt(folder + 'x_test.csv')
+    y_test = iter_loadtxt(folder + 'y_test.csv')
 
     y_train = np.reshape(y_train, y_train.shape[0], 1)
     y_test = np.reshape(y_test, y_test.shape[0], 1)
