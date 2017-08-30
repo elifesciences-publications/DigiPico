@@ -74,96 +74,29 @@ def prep_data(path_train, path_test, over_sample_rate):
     return x_train, y_train, x_test, y_test
 
 
-def prep_data_all(path_train, over_sample_rate):
-
-    # fix random seed for reproducibility
-    seed = 7
-    np.random.seed(seed)
-
-    # dataframe = pandas.read_csv(path_train, header=None, dtype=float, usecols=range(1, 53))
-    # dataset = dataframe.values
-
-    dataset = np.genfromtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 53))
-    feature_begin = 1
-    # final_col = int((dataframe.columns[dataframe.isnull().any()].tolist())[0])  # If final col is null, take it out
-    feature_end = 51 # final_col - 1
-
-    # split into input (X) and output (Y) variables
-    X = dataset[:, np.r_[feature_begin:feature_end]].astype(float)  # If used,33: in mlp, reduce neurons
-    Y = dataset[:, 0].astype(int)
-    # X = np.nan_to_num(X)
-
-    # ASSUME DATA IS SORTED
-    positive_num = np.count_nonzero(Y)
-
-    X_pos = X[0:positive_num, :]
-    Y_pos = Y[0:positive_num]
-
-    X_neg = X[positive_num:, :]
-    Y_neg = Y[positive_num:]
-
-    # Shuffle so that not all are taken from same chromosomes
-    X_pos, Y_pos = shuffle(X_pos, Y_pos, random_state=2)
-    X_neg, Y_neg = shuffle(X_neg, Y_neg, random_state=3)
-
-    train_ratio = 0.85
-    pb = 0
-    pe = int(train_ratio * positive_num)
-    pnum = pe * over_sample_rate
-    nb = 0
-    ne = pnum  # If over sample rate = 1, this would be equal to number of 1s
-
-    if ne > Y.shape[0]:  # Just to make sure over sampling rate doesn't exceed the number of zeros
-        ne = Y.shape[0]
-        print('NE greater than limit!')
-
-    x_train = X_pos[pb:pe, :]
-    x_train = np.tile(x_train, (over_sample_rate, 1))  # Over_sample positives
-    x_train = np.append(x_train, X_neg[nb:ne, :], axis=0)
-    y_train = Y_pos[pb:pe]
-    y_train = np.tile(y_train, (over_sample_rate, 1))
-    y_train = np.append(y_train, Y_neg[nb:ne])
-
-    # Shuffle the training data so 1 and 0 are not together
-    x_train, y_train = shuffle(x_train, y_train, random_state=0)
-
-    # Now add all the rest of 0 and 1s to create the test set
-    x_test = X_pos[pe:, :]
-    y_test = Y_pos[pe:]
-    x_test = np.append(x_test, X_neg[ne:, :], axis=0)
-    y_test = np.append(y_test, Y_neg[ne:], axis=0)
-
-    x_test, y_test = shuffle(x_test, y_test, random_state=5)
-
-    np.savetxt("x_train.csv", x_train, delimiter=",")
-    np.savetxt("y_train.csv", y_train, delimiter=",")
-    np.savetxt("x_test.csv", x_test, delimiter=",")
-    np.savetxt("y_test.csv", y_test, delimiter=",")
-
-    return x_train, y_train, x_test, y_test
-
-
 def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
-    batch_counter = 0
-    if usecols is None:
-        usecols = range(1, feature_size+1)
-        x_set = np.zeros([batch_size, feature_size])
-        y_set = np.zeros([batch_size, 1])
-    else:
-        x_set = np.zeros([batch_size, len(usecols)+1])
-        y_set = np.zeros([batch_size, 1])
-    with open(filename, 'r') as train_file:
-        for line in train_file:
-                batch_counter += 1
-                line = line.rstrip().split(delimiter)
-                y = np.array([dtype(line[0])])
-                x = [dtype(line[k]) for k in usecols]
-                x = np.reshape(x, (-1, len(x)))
-                x_set[batch_counter - 1] = x
-                y_set[batch_counter - 1] = y
-                if batch_counter == batch_size:
-                    batch_counter = 0
-                    yield (x_set, y_set)
+    while 1:
+        batch_counter = 0
+        if usecols is None:
+            usecols = range(1, feature_size+1)
+            x_batch = np.zeros([batch_size, feature_size])
+            y_batch = np.zeros([batch_size, 1])
+        else:
+            x_batch = np.zeros([batch_size, len(usecols)])
+            y_batch = np.zeros([batch_size, 1])
+        with open(filename, 'r') as train_file:
+            for line in train_file:
+                    batch_counter += 1
+                    line = line.rstrip().split(delimiter)
+                    y = np.array([dtype(line[0])])
+                    x = [dtype(line[k]) for k in usecols]
+                    x = np.reshape(x, (-1, len(x)))
+                    x_batch[batch_counter - 1] = x
+                    y_batch[batch_counter - 1] = y
+                    if batch_counter == batch_size:
+                        batch_counter = 0
+                        # print(x_batch)
+                        yield (x_batch, y_batch)
 
 
 def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
@@ -184,19 +117,16 @@ def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.flo
     return data
 
 
-def prep_data_all_2(path_train, over_sample_rate):
-
+def prep_data_all(path_train, over_sample_rate, cols):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
+
     # cols = range(1, 66)
-    cols = range(1, 33)
-    # dataset = np.loadtxt(path_train, delimiter=',', dtype=float, usecols=range(1, 33))
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
     feature_begin = 1
     feature_end = 51  # final_col - 1
-
     positive_num = np.count_nonzero(dataset[:, 0])
 
     data_pos = dataset[0:positive_num, :]
@@ -228,8 +158,8 @@ def prep_data_all_2(path_train, over_sample_rate):
     test_data = data_pos[pe:, :]
     test_data = np.append(test_data, data_neg[ne:, :], axis=0)
 
-    np.savetxt("test.csv", test_data, delimiter=",")
-    np.savetxt("train.csv", train_data, delimiter=",")
+    np.savetxt("test.csv", test_data, delimiter=",", fmt='%10.5f')
+    np.savetxt("train.csv", train_data, delimiter=",", fmt='%10.5f')
 
     print("Data Preparation Done!")
     return train_data, test_data
@@ -239,15 +169,20 @@ def prep_data_all_2(path_train, over_sample_rate):
 
 def load_preprocessed_data(folder=''):
 
-    x_train = iter_loadtxt(folder + 'x_train.csv')
-    y_train = iter_loadtxt(folder + 'y_train.csv')
-    x_test = iter_loadtxt(folder + 'x_test.csv')
-    y_test = iter_loadtxt(folder + 'y_test.csv')
+    # x_train = iter_loadtxt(folder + 'x_train.csv')
+    # y_train = iter_loadtxt(folder + 'y_train.csv')
+    # x_test = iter_loadtxt(folder + 'x_test.csv')
+    # y_test = iter_loadtxt(folder + 'y_test.csv')
+    #
+    # y_train = np.reshape(y_train, y_train.shape[0], 1)
+    # y_test = np.reshape(y_test, y_test.shape[0], 1)
+    #
+    # return x_train, y_train, x_test, y_test
+    train = iter_loadtxt(folder + 'train.csv')
+    test = iter_loadtxt(folder + 'test.csv')
 
-    y_train = np.reshape(y_train, y_train.shape[0], 1)
-    y_test = np.reshape(y_test, y_test.shape[0], 1)
+    return train, test
 
-    return x_train, y_train, x_test, y_test
 
 if __name__ == "__main__":
-    prep_data_all_2('Sahand_All_No-Filter.csv', 1)
+    prep_data_all('Sahand_All_No-Filter.csv', 1)
