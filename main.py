@@ -9,14 +9,14 @@ import preprocess
 import linecache
 
 if __name__ == "__main__":
-    weights_path = ''
+    weights_path = 'mutation_logistic_wts.h5'
     # weights_path = 'mutation_logistic_wts.h5'
 
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
     nb_classes = 2
-    batch_size = 1
+    batch_size = 32
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
     epochs = 1
@@ -36,7 +36,7 @@ if __name__ == "__main__":
                 break
 
     input_dim = len(line_x) - 1
-    set_size = 17920
+    set_size = 18240
     steps_per_epoch = int(set_size/batch_size)
     # input_dim = x_train.shape[1]
     # steps_per_epoch = int(x_train.shape[0] / batch_size)
@@ -65,11 +65,11 @@ if __name__ == "__main__":
     #                     epochs=epochs,
     #                     verbose=1,
     #                     )#validation_data=(x_test, y_test))  # , callbacks=[tbCallBack])
+    if weights_path == '':
+        model.fit_generator(preprocess.generate_data_from_file('train.csv', feature_size=input_dim, batch_size=batch_size),
+                            samples_per_epoch=set_size, nb_epoch=epochs, verbose=1)
 
-    model.fit_generator(preprocess.generate_data_from_file('train.csv', feature_size=input_dim, batch_size=batch_size),
-                        steps_per_epoch=steps_per_epoch, nb_epoch=epochs)
-
-    score = model.evaluate_generator(preprocess.generate_data_from_file('test.csv', feature_size=input_dim, batch_size=batch_size), int(106946/batch_size))
+    score = model.evaluate_generator(preprocess.generate_data_from_file('test.csv', feature_size=input_dim, batch_size=batch_size), steps_per_epoch)
 
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])

@@ -144,26 +144,27 @@ def prep_data_all(path_train, over_sample_rate):
 
 
 def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
-    batch_counter = 0
-    if usecols is None:
-        usecols = range(1, feature_size+1)
-        x_set = np.zeros([batch_size, feature_size])
-        y_set = np.zeros([batch_size, 1])
-    else:
-        x_set = np.zeros([batch_size, len(usecols)+1])
-        y_set = np.zeros([batch_size, 1])
-    with open(filename, 'r') as train_file:
-        for line in train_file:
-                batch_counter += 1
-                line = line.rstrip().split(delimiter)
-                y = np.array([dtype(line[0])])
-                x = [dtype(line[k]) for k in usecols]
-                x = np.reshape(x, (-1, len(x)))
-                x_set[batch_counter - 1] = x
-                y_set[batch_counter - 1] = y
-                if batch_counter == batch_size:
-                    batch_counter = 0
-                    yield (x_set, y_set)
+    while 1:
+        batch_counter = 0
+        if usecols is None:
+            usecols = range(1, feature_size+1)
+            x_set = np.zeros([batch_size, feature_size])
+            y_set = np.zeros([batch_size, 1])
+        else:
+            x_set = np.zeros([batch_size, len(usecols)])
+            y_set = np.zeros([batch_size, 1])
+        with open(filename, 'r') as train_file:
+            for line in train_file:
+                    batch_counter += 1
+                    line = line.rstrip().split(delimiter)
+                    y = np.array([dtype(line[0])])
+                    x = [dtype(line[k]) for k in usecols]
+                    x = np.reshape(x, (-1, len(x)))
+                    x_set[batch_counter - 1] = x
+                    y_set[batch_counter - 1] = y
+                    if batch_counter == batch_size:
+                        batch_counter = 0
+                        yield (x_set, y_set)
 
 
 def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
