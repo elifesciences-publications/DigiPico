@@ -5,7 +5,7 @@ config:
   config:
     activation: relu
     activity_regularizer: null
-    batch_input_shape: !!python/tuple [null, 31]
+    batch_input_shape: !!python/tuple [null, 64]
     bias_constraint: null
     bias_initializer:
       class_name: Zeros
@@ -19,7 +19,7 @@ config:
     kernel_regularizer: null
     name: dense_1
     trainable: true
-    units: 31
+    units: 64
     use_bias: true
 - class_name: Dense
   config:
@@ -37,7 +37,7 @@ config:
     kernel_regularizer: null
     name: dense_2
     trainable: true
-    units: 15
+    units: 32
     use_bias: true
 - class_name: Dense
   config:
@@ -55,7 +55,7 @@ config:
     kernel_regularizer: null
     name: dense_3
     trainable: true
-    units: 7
+    units: 16
     use_bias: true
 - class_name: Dense
   config:
