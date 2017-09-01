@@ -20,11 +20,11 @@ if __name__ == "__main__":
     batch_size = 128
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
-    epochs = 1
+    epochs = 10
     over_sampling_rate = 1  # ATTENTION: MAX 8 in current set
 
     # Set tensorboard callback
-    tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
+    # tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
     # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv','Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
@@ -34,10 +34,10 @@ if __name__ == "__main__":
     test_folder = 'Large_PD/'
     train_folder = 'Large_PD/'
     # wc -l filename to extract number of rows of csv file
-    train_size = 18240
-    test_size = 106946
-    # train_size = 2800200
-    # test_size = 6268829
+    # train_size = 18240
+    # test_size = 106946
+    train_size = 2800200
+    test_size = 6268829
 
     with open(train_folder + 'train.csv', 'r') as data_file:
         for i, line_x in enumerate(data_file):
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     #                     )#validation_data=(x_test, y_test))  # , callbacks=[tbCallBack])
     if weights_path == '':
         model.fit_generator(preprocess.generate_data_from_file(train_folder + 'train.csv', feature_size=input_dim, batch_size=batch_size),
-                            steps_per_epoch=train_steps_per_epoch, nb_epoch=epochs, verbose=1, callbacks=[tbCallBack])
+                            steps_per_epoch=train_steps_per_epoch, nb_epoch=epochs, verbose=1)  #, callbacks=[tbCallBack])
 
     score = model.evaluate_generator(preprocess.generate_data_from_file(test_folder + 'test.csv', feature_size=input_dim, batch_size=batch_size), test_steps_per_epoch)
 
