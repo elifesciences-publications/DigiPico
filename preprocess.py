@@ -117,16 +117,12 @@ def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.flo
     return data
 
 
-def prep_data_all(path_train, over_sample_rate, cols):
+def prep_data_all(path_train, cols, over_sample_rate):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-
-    # cols = range(1, 66)
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
-    feature_begin = 1
-    feature_end = 51  # final_col - 1
     positive_num = np.count_nonzero(dataset[:, 0])
 
     data_pos = dataset[0:positive_num, :]
@@ -167,7 +163,7 @@ def prep_data_all(path_train, over_sample_rate, cols):
 
 # x_train, y_train, x_test, y_test = prep_data_all('Data/Sahand_All_No-Filter.csv', 1)
 
-def load_preprocessed_data(folder=''):
+def load_preprocessed_data(train_folder='', test_folder='', skip_train=False, skip_test=False):
 
     # x_train = iter_loadtxt(folder + 'x_train.csv')
     # y_train = iter_loadtxt(folder + 'y_train.csv')
@@ -178,8 +174,12 @@ def load_preprocessed_data(folder=''):
     # y_test = np.reshape(y_test, y_test.shape[0], 1)
     #
     # return x_train, y_train, x_test, y_test
-    train = iter_loadtxt(folder + 'train.csv')
-    test = iter_loadtxt(folder + 'test.csv')
+    train = []
+    test = []
+    if not skip_train:
+        train = iter_loadtxt(train_folder + 'train.csv')
+    if not skip_test:
+        test = iter_loadtxt(test_folder + 'test.csv')
 
     return train, test
 

@@ -8,6 +8,7 @@ from sklearn.utils import shuffle
 import preprocess
 import linecache
 import keras
+import subprocess
 
 if __name__ == "__main__":
     weights_path = ''
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     batch_size = 128
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
-    epochs = 10
+    epochs = 200
     over_sampling_rate = 1  # ATTENTION: MAX 8 in current set
 
     # Set tensorboard callback
@@ -28,16 +29,19 @@ if __name__ == "__main__":
 
     # load dataset
     # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv','Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
-    # train_data, test_data = preprocess.prep_data_all('Data/Filter.csv', over_sampling_rate, cols=range(1, 33))
+    # train_data, test_data = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', cols=range(1, 67), over_sampling_rate,)
     # train, test = preprocess.load_preprocessed_data('Small_PD/')
 
-    test_folder = 'Large_PD/'
-    train_folder = 'Large_PD/'
-    # wc -l filename to extract number of rows of csv file
-    # train_size = 18240
-    # test_size = 106946
-    train_size = 2800200
-    test_size = 6268829
+    test_folder = ''
+    train_folder = ''
+    # Count the number of rows in each csv file
+    train_row_num = subprocess.check_output(['wc', '-l', train_folder + 'train.csv'])
+    test_row_num = subprocess.check_output(['wc', '-l', test_folder + 'test.csv'])
+    train_size = int(train_row_num.rstrip().split(' ')[0])
+    test_size = int(test_row_num.rstrip().split(' ')[0])
+
+    # train_col_num = subprocess.check_output(['head', '-1', train_folder + 'train.csv', 'sed', "'s/[^,]//g'", 'wc', '-c'])
+    # input_dim = int(train_col_num[0])
 
     with open(train_folder + 'train.csv', 'r') as data_file:
         for i, line_x in enumerate(data_file):
@@ -83,30 +87,32 @@ if __name__ == "__main__":
     score = model.evaluate_generator(preprocess.generate_data_from_file(test_folder + 'test.csv', feature_size=input_dim, batch_size=batch_size), test_steps_per_epoch)
 
     print('Test loss:', score[0])
-    print('Test accuracy:', score[1]);
+    print('Test accuracy:', score[1])
 
-    # y_pred = model.predict_generator(preprocess.generate_data_from_file('test.csv', feature_size=input_dim, batch_size=batch_size), steps_per_epoch)
-    # # y_pred = model.predict(x_test)
-    # y_pred_pos = np.round(np.clip(y_pred, 0, 1))
-    # y_pred_neg = 1 - y_pred_pos
-    # y_pred_pos = np.reshape(y_pred_pos, y_pred_pos.shape[0])
-    # y_pred_neg = np.reshape(y_pred_neg, y_pred_neg.shape[0])
-    #
-    # y_pos = np.round(np.clip(y_test, 0, 1))
-    # y_neg = 1 - y_pos
-    #
-    # tp = np.sum(y_pos * y_pred_pos)
-    # tn = np.sum(y_neg * y_pred_neg)
-    #
-    # fn = np.sum(y_pos * y_pred_neg)
-    # fp = np.sum(y_neg * y_pred_pos)
-    #
-    # total_pos = np.sum(y_pos)
-    # total_neg = np.sum(y_neg)
-    #
-    # print('TP: {}%, FP: {}%, TN: {}%, FN: {}%'.format(tp / total_pos, fp / total_pos, tn / total_neg, fn / total_neg))
-    # print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp, fp, tn, fn))
+    y_pred = model.predict_generator(preprocess.generate_data_from_file(test_folder + 'test.csv', feature_size=input_dim, batch_size=batch_size), test_steps_per_epoch)
+    _, test = preprocess.load_preprocessed_data(test_folder=test_folder, skip_train=True)
+    y_test = test[:y_pred.shape[0], 0]
+    # y_pred = model.predict(x_test)
+    y_pred_pos = np.round(np.clip(y_pred, 0, 1))
+    y_pred_neg = 1 - y_pred_pos
+    y_pred_pos = np.reshape(y_pred_pos, y_pred_pos.shape[0])
+    y_pred_neg = np.reshape(y_pred_neg, y_pred_neg.shape[0])
 
+    y_pos = np.round(np.clip(y_test, 0, 1))
+    y_neg = 1 - y_pos
+
+    tp = np.sum(y_pos * y_pred_pos)
+    tn = np.sum(y_neg * y_pred_neg)
+
+    fn = np.sum(y_pos * y_pred_neg)
+    fp = np.sum(y_neg * y_pred_pos)
+
+    total_pos = np.sum(y_pos)
+    total_neg = np.sum(y_neg)
+
+    print('TP: {}%, FP: {}%, TN: {}%, FN: {}%'.format(tp / total_pos, fp / total_pos, tn / total_neg, fn / total_neg))
+    print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp, fp, tn, fn))
+    #
     # Save model as json and yaml
     json_string = model.to_json()
     open('mutation_logistic_model.json', 'w').write(json_string)
