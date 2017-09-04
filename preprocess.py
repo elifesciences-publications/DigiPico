@@ -12,30 +12,27 @@ def prep_data_all(path_train, cols, over_sample_rate):
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
     positive_num = np.count_nonzero(dataset[:, 0])
-
     data_pos = dataset[0:positive_num, :]
     data_neg = dataset[positive_num:, :]
-    # Extend the data by rotations
 
     # Shuffling to put different chromosomes together
     data_pos = shuffle(data_pos, random_state=3)
     data_neg = shuffle(data_neg, random_state=6)
     # Since out training data is big enough, we can use a higher train ratio (Ng)
-    train_ratio = 0.94
+    train_ratio = 0.40
     pb = 0
     pe = int(train_ratio * positive_num)
-    pnum = pe * over_sample_rate
+    pnum = int(pe * over_sample_rate)
     nb = 0
-    ne = pnum  # If over sample rate = 1, this would be equal to number of 1s
-
-    if ne > dataset.shape[0]:  # Just to make sure over sampling rate doesn't exceed the number of zeros
+    ne = pnum  # If over sample rate = 1, ne would be equal to number of 1s
+    # Make sure over sampling rate doesn't exceed the number of zeros
+    if ne > dataset.shape[0]:
         ne = dataset.shape[0]
-        print('NE greater than limit!')
+        print('Oversampling rate greater than limit!')
 
     train_data = data_pos[pb:pe, :]
     train_data = np.tile(train_data, (over_sample_rate, 1))
     train_data = np.append(train_data, data_neg[nb:ne, :], axis=0)
-
     # Shuffle the training data so 1 and 0 are not together
     train_data = shuffle(train_data, random_state=0)
 
@@ -92,6 +89,7 @@ def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.flo
     data = np.fromiter(iter_func(), dtype=dtype)
     data = data.reshape((-1, iter_loadtxt.rowlength))
     return data
+
 
 def load_preprocessed_data(train_folder='', test_folder='', skip_train=False, skip_test=False):
 
