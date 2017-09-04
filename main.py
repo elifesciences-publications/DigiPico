@@ -4,7 +4,6 @@ import numpy as np
 import pandas
 import nn
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
 import sklearn
 from sklearn import linear_model
 import preprocess
@@ -13,6 +12,7 @@ import keras
 import subprocess
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from sklearn.metrics import roc_curve, auc
 
 if __name__ == "__main__":
     weights_path = ''
@@ -26,18 +26,15 @@ if __name__ == "__main__":
     test_batch_size = 1
     # Instead of epochs on the data, we can increase over_sampling rate
     # So that in the next epoch, different 0 samples are chosen (but same 1s)
-    epochs = 20
+    epochs = 30
     over_sampling_rate = 1  # ATTENTION: MAX 8 in current set
 
     # Set tensorboard callback
     # tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # load dataset
-    # x_train, y_train, x_test, y_test = preprocess.prep_data('Data/Sahand_Chr22_No-Filter.csv'
-    #   ,'Data/Sahand_Chr21_Filter.csv', over_sampling_rate)
-    # train_data, test_data = preprocess.prep_data_all('Data/Sahand_All_No-Filter.csv'
-    #   , cols=range(1, 67), over_sampling_rate)
-    train, test = preprocess.load_preprocessed_data('')
+    train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
+    # train, test = preprocess.load_preprocessed_data('')
 
     test_folder = ''
     train_folder = ''
@@ -46,37 +43,19 @@ if __name__ == "__main__":
     test_row_num = subprocess.check_output(['wc', '-l', test_folder + 'test.csv'])
     train_size = int(train_row_num.rstrip().split(' ')[0])
     test_size = int(test_row_num.rstrip().split(' ')[0])
-    # train_col_num = subprocess.check_output(['head', '-1', train_folder + 'train.csv', 'sed', "'s/[^,]//g'", 'wc', '-c'])
-    # input_dim = int(train_col_num[0])
-
     with open(train_folder + 'train.csv', 'r') as data_file:
-        for i, line_x in enumerate(data_file):
-            if i == 0:
-                line_x = line_x.rstrip().split(',')
-                break
-
-    input_dim = len(line_x) - 1
-
+        line = (data_file.next()).rstrip().split(',')
+    input_dim = len(line) - 1  # First col is the label, so skip it in counting the feature numbers
     train_steps_per_epoch = int(train_size/batch_size)
     test_steps_per_epoch = int(test_size/test_batch_size)
 
-    # input_dim = x_train.shape[1]
-    # steps_per_epoch = int(x_train.shape[0] / batch_size)
+    print(train_size, 'train samples')
+    print(test_size, 'test samples')
 
-    # Extend the data by rotations
-    # Convert
-    # x_train = x_train.astype('float32')
-    # x_test = x_test.astype('float32')
     # # Normalize
     # scalar = StandardScaler()
     # train = scalar.fit_transform(train)
     # test = scalar.fit_transform(test)
-
-    # pca = PCA(n_components=input_dim)
-    # train[:, 1:] = pca.fit_transform(train[:, 1:])
-    # test[:, 1:] = pca.fit_transform(test[:, 1:])
-    #print(pca.explained_variance_ratio_)
-    #print(pca.singular_values_)
 
     # # Visualize the data:
     # plt.scatter(train[:, 35:36], train[:, 36:37], c=train[:, 0], s=40, cmap=plt.cm.Spectral)
@@ -85,26 +64,30 @@ if __name__ == "__main__":
     # # Logistic Regression using scikit
     # clf = sklearn.linear_model.LogisticRegressionCV()
     # clf.fit(train[:, 1:], train[:, 0])
-    # 
+    #
     # # Print accuracy
     # LR_predictions = clf.predict(test[:, 1:])
     # print('Accuracy of logistic regression: %d ' % float(
-    #     (np.dot(test[:, 0], LR_predictions) + np.dot(1 - test[:, 0], 1 - LR_predictions)) / float(test[:, 0].size) * 100) +
-    #       '% ' + "(percentage of correctly labelled datapoints)")
+    #     (np.dot(test[:, 0], LR_predictions) + np.dot(1 - test[:, 0], 1 - LR_predictions))
+    #      / float(test[:, 0].size) * 100) +'% ' + "(percentage of correctly labelled datapoints)")
     #
     # weights = np.array(clf.coef_)
     # print(weights[0])
 
-    #
-    # print(x_train.shape[0], 'train samples')
-    # print(x_test.shape[0], 'test samples')
-
     # Build the model
-    model = nn.build_model(input_dim, nb_classes-1, type='ml-binary', weights_path=weights_path)
-
+    model = nn.build_model(input_dim, nb_classes-1, type='binary', weights_path=weights_path)
     # Print a summary of the model
     model.summary()
+    # When given a weight path, just go to testing otherwise train.
+    if weights_path == '':
+        history = model.fit(train[:, 1:], train[:, 0],
+                            batch_size=batch_size,
+                            epochs=epochs,
+                            verbose=1,
+                            validation_split=0.2)  # , callbacks=[tbCallBack])
 
+    score = model.evaluate(test[:, 1:], test[:, 0])
+    # Generator-based training
     # if weights_path == '':
     #     model.fit_generator(preprocess.generate_data_from_file(train_folder + 'train.csv',
     #         feature_size=input_dim, batch_size=batch_size),
@@ -113,23 +96,14 @@ if __name__ == "__main__":
     #
     # score = model.evaluate_generator(preprocess.generate_data_from_file(test_folder + 'test.csv',
     #         feature_size=input_dim, batch_size=batch_size), test_steps_per_epoch)
-
-    if weights_path == '':
-        history = model.fit(train[:, 1:], train[:, 0],
-                            batch_size=batch_size,
-                            epochs=epochs,
-                            verbose=1,
-                            validation_split=0.1)  #validation_data=(test[:, 1:], test[:, 0]))  # , callbacks=[tbCallBack])
-
-    score = model.evaluate(test[:, 1:], test[:, 0])
-
-
+    #
+    # y_pred = model.predict_generator(preprocess.generate_data_from_file(test_folder + 'test.csv',
+    #    feature_size=input_dim, batch_size=test_batch_size), test_steps_per_epoch)
+    # _, test = preprocess.load_preprocessed_data(test_folder=test_folder, skip_train=True)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
-    # y_pred = model.predict_generator(preprocess.generate_data_from_file(test_folder + 'test.csv', feature_size=input_dim, batch_size=test_batch_size), test_steps_per_epoch)
     y_pred = model.predict(test[:, 1:])
-    _, test = preprocess.load_preprocessed_data(test_folder=test_folder, skip_train=True)
     y_test = test[:y_pred.shape[0], 0]
 
     y_pred_pos = np.round(np.clip(y_pred, 0, 1))
@@ -151,6 +125,17 @@ if __name__ == "__main__":
 
     print('TP: {}%, FP: {}%, TN: {}%, FN: {}%'.format(tp / total_pos, fp / total_pos, tn / total_neg, fn / total_neg))
     print('TP: {}, FP: {}, TN: {}, FN: {}'.format(tp, fp, tn, fn))
+
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    fpr, tpr, _ = roc_curve(y_test, y_pred, pos_label=1)
+    # print(fpr)
+    # print(tpr)
+    roc_auc = auc(fpr, tpr)
+    print(roc_auc)
+
     #
     # Save model as json and yaml
     json_string = model.to_json()

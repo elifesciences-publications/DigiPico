@@ -47,6 +47,7 @@ def build_model(input_dim,output_dim,type,weights_path):
         # random weight initialization is not so important
         model = Sequential()
         model.add(Dense(input_dim, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
+        model.add(Dense(input_dim/2, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
         model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 
         if weights_path:
