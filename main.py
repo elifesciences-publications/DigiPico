@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import sys
 import numpy as np
 import pandas
 import nn
@@ -13,11 +13,10 @@ import subprocess
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.metrics import roc_curve, auc, average_precision_score
-import sys
 
 if __name__ == "__main__":
     weights_path = ''
-    # weights_path = 'mutation_logistic_wts.h5'
+    weights_path = 'mutation_logistic_wts.h5'
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
@@ -27,13 +26,13 @@ if __name__ == "__main__":
     ''' Instead of epochs on the data, we can increase over_sampling rate
     So that in the next epoch, different 0 samples are chosen (but same 1s) '''
     epochs = 30
-    over_sampling_rate = 2  # ATTENTION: MAX 8 in current set
+    over_sampling_rate = 2  # ATTENTION: Check the max in each setting
     # Set tensorboard callback
     # tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # Load Dataset
-    train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
-    # train, test = preprocess.load_preprocessed_data('')
+    # train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
+    train, test = preprocess.load_preprocessed_data('')
     test_folder = ''
     train_folder = ''
     train_row_num = subprocess.check_output(['wc', '-l', train_folder + 'train.csv'])
@@ -69,7 +68,7 @@ if __name__ == "__main__":
     # print(weights[0])
 
     # Build the model
-    model = nn.build_model(input_dim, nb_classes-1, type='ml-binary', weights_path=weights_path)
+    model = nn.build_model(input_dim, nb_classes-1, type='binary', weights_path=weights_path)
     # Print a summary of the model
     model.summary()
     # When given a weight path, just go to testing otherwise train.
@@ -128,14 +127,14 @@ if __name__ == "__main__":
     print('Test roc auc:', roc_auc)
     print('Test average precision:', average_precision_score(y_test, y_pred))
 
-
-    #
     # Save model as json and yaml
     json_string = model.to_json()
     open('mutation_logistic_model.json', 'w').write(json_string)
     yaml_string = model.to_yaml()
     open('mutation_logistic_model.yaml', 'w').write(yaml_string)
-
     # save the weights in h5 format
     model.save_weights('mutation_logistic_wts.h5')
+    # np.set_printoptions(suppress=True, precision=1)
+    # for i, val in enumerate(model.layers[0].get_weights()[0]):
+    #     print(str(i+2) + ":" + str(val))
 
