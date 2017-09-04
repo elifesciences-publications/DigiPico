@@ -59,6 +59,7 @@ if __name__ == "__main__":
 
     train_steps_per_epoch = int(train_size/batch_size)
     test_steps_per_epoch = int(test_size/test_batch_size)
+
     # input_dim = x_train.shape[1]
     # steps_per_epoch = int(x_train.shape[0] / batch_size)
 
@@ -121,6 +122,7 @@ if __name__ == "__main__":
                             validation_split=0.1)  #validation_data=(test[:, 1:], test[:, 0]))  # , callbacks=[tbCallBack])
 
     score = model.evaluate(test[:, 1:], test[:, 0])
+
 
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])

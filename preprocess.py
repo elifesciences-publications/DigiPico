@@ -75,9 +75,6 @@ def prep_data(path_train, path_test, over_sample_rate):
 
 
 def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
-    # HAs to be randomly shuffled at each EPOCH
-    seed = 7
-    np.random.seed(seed)
     while 1:
         batch_counter = 0
         if usecols is None:
@@ -87,6 +84,7 @@ def generate_data_from_file(filename, feature_size, batch_size, usecols=None, de
         else:
             x_batch = np.zeros([batch_size, len(usecols)])
             y_batch = np.zeros([batch_size, 1])
+
         with open(filename, 'r') as train_file:
             for line in train_file:
                     batch_counter += 1
