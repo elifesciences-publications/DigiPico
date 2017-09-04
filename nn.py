@@ -1,6 +1,7 @@
 import numpy as np
 import keras
 import pandas
+import keras.layers.advanced_activations as activations
 
 from keras.datasets import mnist
 from keras.models import Sequential
@@ -46,13 +47,6 @@ def build_model(input_dim,output_dim,type,weights_path):
         # random weight initialization is not so important
         model = Sequential()
         model.add(Dense(input_dim, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
-        # model.add(Dropout(0.5))
-        model.add(Dense(int(input_dim/2), kernel_initializer='normal', activation='relu'))
-        #model.add(Dropout(0.5))
-        model.add(Dense(int(input_dim/4), kernel_initializer='normal', activation='relu'))
-        # model.add(Dense(10, kernel_initializer='normal', activation='relu'))
-        #model.add(Dropout(0.2))
-        #model.add(Dense(15, kernel_initializer='normal', activation='relu'))
         model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 
         if weights_path:
@@ -66,7 +60,7 @@ def build_model(input_dim,output_dim,type,weights_path):
 
     elif type == 'cnn':
         model = Sequential()
-        model.add(Conv1D(filters=32, kernel_size=3, padding='same', activation='relu', input_shape=(input_dim,)))
+        model.add(Conv1D(filters=32, kernel_size=1, padding='same', activation='relu', input_shape=(input_dim,1)))
         # model.add(MaxPooling1D(pool_size=2))
         #model.add(Dropout(0.2))
         # model.add(Flatten())
