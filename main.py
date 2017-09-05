@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import pandas
 import nn
-from sklearn.preprocessing import StandardScaler
 import sklearn
 from sklearn import linear_model
 import preprocess
@@ -16,7 +15,7 @@ from sklearn.metrics import roc_curve, auc, average_precision_score
 
 if __name__ == "__main__":
     weights_path = ''
-    weights_path = 'mutation_logistic_wts.h5'
+    # weights_path = 'mutation_logistic_wts.h5'
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
@@ -25,14 +24,14 @@ if __name__ == "__main__":
     test_batch_size = 1
     ''' Instead of epochs on the data, we can increase over_sampling rate
     So that in the next epoch, different 0 samples are chosen (but same 1s) '''
-    epochs = 30
+    epochs = 40
     over_sampling_rate = 2  # ATTENTION: Check the max in each setting
     # Set tensorboard callback
     # tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # Load Dataset
-    # train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
-    train, test = preprocess.load_preprocessed_data('')
+    train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
+    # train, test = preprocess.load_preprocessed_data('')
     test_folder = ''
     train_folder = ''
     train_row_num = subprocess.check_output(['wc', '-l', train_folder + 'train.csv'])
@@ -47,10 +46,6 @@ if __name__ == "__main__":
     print(train_size, 'train samples')
     print(test_size, 'test samples')
 
-    # # Normalize
-    # scalar = StandardScaler()
-    # train = scalar.fit_transform(train)
-    # test = scalar.fit_transform(test)
     # # Visualize the data:
     # plt.scatter(train[:, 35:36], train[:, 36:37], c=train[:, 0], s=40, cmap=plt.cm.Spectral)
     # plt.show()
@@ -77,7 +72,7 @@ if __name__ == "__main__":
                             batch_size=batch_size,
                             epochs=epochs,
                             verbose=1,
-                            validation_split=0.2)  # , callbacks=[tbCallBack])
+                            validation_split=0.1)  # , callbacks=[tbCallBack])
 
     score = model.evaluate(test[:, 1:], test[:, 0])
     # Generator-based training
@@ -134,7 +129,7 @@ if __name__ == "__main__":
     open('mutation_logistic_model.yaml', 'w').write(yaml_string)
     # save the weights in h5 format
     model.save_weights('mutation_logistic_wts.h5')
-    # np.set_printoptions(suppress=True, precision=1)
-    # for i, val in enumerate(model.layers[0].get_weights()[0]):
-    #     print(str(i+2) + ":" + str(val))
+    np.set_printoptions(suppress=True, precision=1)
+    for i, val in enumerate(model.layers[0].get_weights()[0]):
+        print(str(i+2) + ":" + str(val))
 
