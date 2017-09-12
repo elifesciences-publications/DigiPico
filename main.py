@@ -11,11 +11,12 @@ import keras
 import subprocess
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_curve, auc, average_precision_score
 
 if __name__ == "__main__":
-    weights_path = ''
-    # weights_path = 'mutation_logistic_wts.h5'
+    # weights_path = ''
+    weights_path = 'mutation_logistic_wts.h5'
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
@@ -30,8 +31,8 @@ if __name__ == "__main__":
     # tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
     # Load Dataset
-    train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
-    # train, test = preprocess.load_preprocessed_data('')
+    # train, test = preprocess.prep_data_all('Data/Sahand_OptMap_Chr22.csv', range(1, 67), over_sampling_rate)
+    train, test = preprocess.load_preprocessed_data('')
     test_folder = ''
     train_folder = ''
     train_row_num = subprocess.check_output(['wc', '-l', train_folder + 'train.csv'])
@@ -46,6 +47,11 @@ if __name__ == "__main__":
     print(train_size, 'train samples')
     print(test_size, 'test samples')
 
+    # Normalize Data (Both train and test)
+    # Important: Normalize test using same mui and sigma from train
+    scalar = StandardScaler()
+    train[:, 1:] = scalar.fit_transform(train[:, 1:])
+    test[:, 1:] = scalar.transform(test[:, 1:])
     # # Visualize the data:
     # plt.scatter(train[:, 35:36], train[:, 36:37], c=train[:, 0], s=40, cmap=plt.cm.Spectral)
     # plt.show()
@@ -132,4 +138,8 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True, precision=1)
     for i, val in enumerate(model.layers[0].get_weights()[0]):
         print(str(i+2) + ":" + str(val))
+    # Visualize the weights:
+    # plt.scatter(range(input_dim), model.layers[0].get_weights()[0])  # , s=40, cmap=plt.cm.Spectral)
+    # plt.show()
+
 

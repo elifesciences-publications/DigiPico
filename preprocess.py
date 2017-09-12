@@ -12,10 +12,6 @@ def prep_data_all(path_train, cols, over_sample_rate):
     dataset = iter_loadtxt(path_train, usecols=cols)
     print("Loading Data Done!")
 
-    # Normalize Data (Both train and test)
-    scalar = StandardScaler()
-    dataset[:, 1:] = scalar.fit_transform(dataset[:, 1:])
-
     positive_num = np.count_nonzero(dataset[:, 0])
     data_pos = dataset[0:positive_num, :]
     data_neg = dataset[positive_num:, :]
