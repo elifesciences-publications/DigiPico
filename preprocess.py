@@ -5,7 +5,8 @@ from sklearn.utils import shuffle
 import linecache
 from sklearn.preprocessing import StandardScaler
 
-def prep_data_all(path_train, cols, over_sample_rate):
+
+def prep_data_all(path_train, cols, over_sample):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
@@ -13,27 +14,48 @@ def prep_data_all(path_train, cols, over_sample_rate):
     print("Loading Data Done!")
 
     positive_num = np.count_nonzero(dataset[:, 0])
+    negative_num = dataset.shape[0] - positive_num
     data_pos = dataset[0:positive_num, :]
     data_neg = dataset[positive_num:, :]
 
     # Shuffling to put different chromosomes together
     data_pos = shuffle(data_pos, random_state=3)
     data_neg = shuffle(data_neg, random_state=6)
-    # Since out training data is big enough, we can use a higher train ratio (Ng)
-    train_ratio = 0.40
+    # Since our training data is big enough, we can use a higher train ratio (Ng)
+    train_ratio = 1.0
+    # Choose the minimum between number of positive and negative samples
+    if positive_num < negative_num:
+        over_sample_rate = int(negative_num/positive_num)
+        smallest_num = positive_num
+    else:
+        over_sample_rate = int(positive_num/negative_num)
+        smallest_num = negative_num
     pb = 0
-    pe = int(train_ratio * positive_num)
-    pnum = int(pe * over_sample_rate)
     nb = 0
-    ne = pnum  # If over sample rate = 1, ne would be equal to number of 1s
-    # Make sure over sampling rate doesn't exceed the number of zeros
-    if ne > dataset.shape[0]:
-        ne = dataset.shape[0]
-        print('Oversampling rate greater than limit!')
+    if over_sample:
+        pe = int(train_ratio * positive_num)
+        ne = int(train_ratio * negative_num)
+    else:  # under sample
+        pe = int(train_ratio * smallest_num)
+        ne = int(train_ratio * smallest_num)
 
-    train_data = data_pos[pb:pe, :]
-    train_data = np.tile(train_data, (over_sample_rate, 1))
-    train_data = np.append(train_data, data_neg[nb:ne, :], axis=0)
+    if positive_num < negative_num:
+        train_data = data_pos[pb:pe, :]
+        if over_sample:
+            train_data = np.tile(train_data, (over_sample_rate, 1))
+            # Sample random indices up to 'pe' (since we don't want to sample from the test set)
+            random_idx = np.random.randint(pe, size=negative_num - over_sample_rate * positive_num)
+            train_data = np.append(train_data, data_pos[random_idx, :], axis=0)
+        train_data = np.append(train_data, data_neg[nb:ne, :], axis=0)
+    else:
+        train_data = data_neg[nb:ne, :]
+        if over_sample:
+            train_data = np.tile(train_data, (over_sample_rate, 1))
+            # Sample random indices up to 'ne' (since we don't want to sample from the test set)
+            random_idx = np.random.randint(ne, size=positive_num - over_sample_rate * negative_num)
+            train_data = np.append(train_data, data_neg[random_idx, :], axis=0)
+        train_data = np.append(train_data, data_pos[pb:pe, :], axis=0)
+
     # Shuffle the training data so 1 and 0 are not together
     train_data = shuffle(train_data, random_state=0)
 
@@ -46,6 +68,19 @@ def prep_data_all(path_train, cols, over_sample_rate):
 
     print("Data Preparation Done!")
     return train_data, test_data
+
+
+def prep_test(path_train, cols, over_sample_rate):
+    # fix random seed for reproducibility
+    seed = 7
+    np.random.seed(seed)
+    dataset = iter_loadtxt(path_train, usecols=cols)
+    print("Loading Data Done!")
+
+    np.savetxt("real_test.csv", dataset, delimiter=",", fmt='%10.5f')
+
+    print("Test Data Preparation Done!")
+    return dataset
 
 
 def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
