@@ -22,7 +22,7 @@ def prep_data_all(path_train, cols, over_sample):
     data_pos = shuffle(data_pos, random_state=3)
     data_neg = shuffle(data_neg, random_state=6)
     # Since our training data is big enough, we can use a higher train ratio (Ng)
-    train_ratio = 1.0
+    train_ratio = 0.80
     # Choose the minimum between number of positive and negative samples
     if positive_num < negative_num:
         over_sample_rate = int(negative_num/positive_num)
@@ -70,14 +70,14 @@ def prep_data_all(path_train, cols, over_sample):
     return train_data, test_data
 
 
-def prep_test(path_train, cols, over_sample_rate):
+def prep_test(path, filename, cols):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-    dataset = iter_loadtxt(path_train, usecols=cols)
+    dataset = iter_loadtxt(path+filename, usecols=cols)
     print("Loading Data Done!")
 
-    np.savetxt("real_test.csv", dataset, delimiter=",", fmt='%10.5f')
+    np.savetxt(path + "/real_test.csv", dataset, delimiter=",", fmt='%10.5f')
 
     print("Test Data Preparation Done!")
     return dataset

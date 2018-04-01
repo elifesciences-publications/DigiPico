@@ -1,6 +1,5 @@
 import numpy as np
 import keras
-import pandas
 import keras.layers.advanced_activations as activations
 
 from keras.datasets import mnist

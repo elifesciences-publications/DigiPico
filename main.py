@@ -27,11 +27,11 @@ if __name__ == "__main__":
     test_batch_size = 1
     ''' Instead of epochs on the data, we can increase over_sampling rate
     So that in the next epoch, different 0 samples are chosen (but same 1s) '''
-    epochs = 5000
-    over_sampling = True
+    epochs = 500
+    over_sampling = False
     cutoff_thr = 0.0  # When 0, probabilities higher than 0.5 are labelled as 1. when -0.3, probabilities higher than
     #  0.8 are considered as 1.
-    model_type = 'ml-binary'
+    model_type = 'binary'
     # Set tensorboard callback
     tbCallBack = keras.callbacks.TensorBoard(log_dir='./summary/log3')
 
