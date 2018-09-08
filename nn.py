@@ -1,6 +1,7 @@
 import numpy as np
 import keras
 import keras.layers.advanced_activations as activations
+from keras.optimizers import Adam
 
 from keras.datasets import mnist
 from keras.models import Sequential
@@ -58,8 +59,9 @@ def build_model(input_dim,output_dim,type,weights_path):
 
         # Metric: binary accuracy, it calculates K.mean(K.equal(y_true, K.round(y_pred)))
         # Meaning: the mean accuracy rate across all predictions
+        opt = Adam()
         model.compile(loss='binary_crossentropy',
-                      optimizer='adam',
+                      optimizer=opt,
                       metrics=['binary_accuracy'])
 
     elif type == 'cnn':
@@ -69,7 +71,7 @@ def build_model(input_dim,output_dim,type,weights_path):
         #model.add(Dropout(0.2))
         # model.add(Flatten())
         model.add(Dense(128, activation='relu'))
-        model.add(Dense(output_dim, activation='softmax'))
+        model.add(Dense(output_dim, activation='sigmoid'))
         # Compile model
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
