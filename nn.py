@@ -50,7 +50,7 @@ def build_model(input_dim,output_dim,type,weights_path):
         model = Sequential()
         model.add(Dense(input_dim, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
         model.add(Dropout(0.3))
-        model.add(Dense(input_dim/2, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(int(input_dim/2), kernel_initializer='normal', activation='relu'))
         model.add(Dropout(0.2))
         model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 

@@ -22,7 +22,7 @@ def prep_data_all(path_train, cols, over_sample):
     data_pos = shuffle(data_pos, random_state=3)
     data_neg = shuffle(data_neg, random_state=6)
     # Since our training data is big enough, we can use a higher train ratio (Ng)
-    train_ratio = 0.80
+    train_ratio = 1 #0.80
     # Choose the minimum between number of positive and negative samples
     if positive_num < negative_num:
         over_sample_rate = int(negative_num/positive_num)
@@ -70,17 +70,36 @@ def prep_data_all(path_train, cols, over_sample):
     return train_data, test_data
 
 
+def prep_separate(path_train, path_test, cols):
+    # fix random seed for reproducibility
+    seed = 7
+    np.random.seed(seed)
+    dataset_train = iter_loadtxt(path_train, usecols=cols)
+    dataset_test = iter_loadtxt(path_test, usecols=cols)
+    print("Loading Data Done!")
+
+    # Shuffle the training data so 1 and 0 are not together
+    dataset_train = shuffle(dataset_train, random_state=0)
+
+    np.savetxt("test.csv", dataset_test, delimiter=",", fmt='%10.5f')
+    np.savetxt("train.csv", dataset_train, delimiter=",", fmt='%10.5f')
+
+    print("Data Preparation Done!")
+    return dataset_train, dataset_test
+
+
 def prep_test(path, filename, cols):
     # fix random seed for reproducibility
     seed = 7
     np.random.seed(seed)
-    dataset = iter_loadtxt(path+filename, usecols=cols)
-    print("Loading Data Done!")
-
-    np.savetxt(path + "/real_test.csv", dataset, delimiter=",", fmt='%10.5f')
-
-    print("Test Data Preparation Done!")
+    dataset = iter_loadtxt(path+"/" + filename, usecols=cols)
     return dataset
+    # print("Loading Data Done!")
+    #
+    # np.savetxt("test.csv", dataset, delimiter=",", fmt='%10.5f')
+    #
+    # print("Test Data Preparation Done!")
+    # return dataset
 
 
 def generate_data_from_file(filename, feature_size, batch_size, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):

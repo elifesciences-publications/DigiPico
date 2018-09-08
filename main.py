@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.utils import shuffle
-import hyperio as hy
+# import hyperio as hy
 
 from keras.optimizers import Adam, Nadam
 from keras.activations import softmax
@@ -35,11 +35,11 @@ if __name__ == "__main__":
     seed = 10
     np.random.seed(seed)
     nb_classes = 2
-    batch_size = 16
+    batch_size = 8
     test_batch_size = 1
     ''' Instead of epochs on the data, we can increase over_sampling rate
     So that in the next epoch, different 0 samples are chosen (but same 1s) '''
-    epochs = 5000
+    epochs = 500
     over_sampling = False
     cutoff_thr = 0.0  # When 0, probabilities higher than 0.5 are labelled as 1. when -0.3, probabilities higher than
     #  0.8 are considered as 1.
@@ -53,7 +53,8 @@ if __name__ == "__main__":
     cols = range(1, 20)
     # cols = [2,3,5,6,7,8,11,12,13,14,15,16,18,19,21,22,23,24,25,26,27,28,29,30,32,33,36,37,38,39,40,41,42,43,44,45,46]
     # train, test = preprocess.prep_data_all('./data/E111.AI.Data.csv', cols, over_sampling)
-    train, test = preprocess.load_preprocessed_data('')
+    train, test = preprocess.load_preprocessed_data()
+    # train, test = preprocess.prep_separate('./data/E111.AI.Data.csv', './data/E011.AI.Data.csv', cols)
     test_folder = ''
     train_folder = ''
     train_row_num = subprocess.check_output(['wc', '-l', train_folder + 'train.csv'])
@@ -71,10 +72,10 @@ if __name__ == "__main__":
 
     # Normalize Data (Both train and test)
     # Important: Normalize test using same mui and sigma from train
-    # scalar = StandardScaler()
-    # train[:, 1:] = scalar.fit_transform(train[:, 1:])
-    # test[:, 1:] = scalar.transform(test[:, 1:])
-    # # Visualize the data:
+    scalar = StandardScaler()
+    train[:, 1:] = scalar.fit_transform(train[:, 1:])
+    test[:, 1:] = scalar.transform(test[:, 1:])
+    # Visualize the data:
     # plt.scatter(train[:, 35:36], train[:, 36:37], c=train[:, 0], s=40, cmap=plt.cm.Spectral)
     # plt.show()
     '''
@@ -105,8 +106,8 @@ if __name__ == "__main__":
                             batch_size=batch_size,
                             epochs=epochs,
                             verbose=2,
-                            callbacks=[tbCallBack],
-                            validation_split=0.3)
+                            callbacks=[tbCallBack])
+                            # validation_split=0.3)
 
     score = model.evaluate(test[:, 1:], test[:, 0])
 
