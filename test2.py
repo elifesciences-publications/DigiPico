@@ -90,7 +90,7 @@ if __name__ == "__main__":
         print('Test roc auc:', roc_auc)
         # print('Test roc threshold:', threshold)
         print('Test average precision:', average_precision_score(y_test, y_pred))
-        plt.figure()
+        # plt.figure()
         plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.xlim([0.0, 1.0])
@@ -105,7 +105,8 @@ if __name__ == "__main__":
         ax2.set_ylabel('Threshold', color='r')
         ax2.set_ylim([thresholds[-1], thresholds[0]])
         ax2.set_xlim([fpr[0], fpr[-1]])
-        plt.show()
+        # plt.show()
+        plt.savefig('zero.png')
 
 
 
