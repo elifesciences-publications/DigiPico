@@ -88,6 +88,19 @@ def prep_separate(path_train, path_test, cols):
     return dataset_train, dataset_test
 
 
+def prep_single(path_data, cols):
+    # fix random seed for reproducibility
+    seed = 7
+    np.random.seed(seed)
+    dataset = iter_loadtxt(path_data, usecols=cols)
+    print("Loading Data Done!")
+
+    # Shuffle the training data so 1 and 0 are not together
+    dataset = shuffle(dataset, random_state=0)
+    print("Data Preparation Done!")
+    return dataset
+
+
 def prep_test(path, filename, cols):
     # fix random seed for reproducibility
     seed = 7

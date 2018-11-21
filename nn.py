@@ -49,9 +49,9 @@ def build_model(input_dim,output_dim,type,weights_path):
         # random weight initialization is not so important
         model = Sequential()
         model.add(Dense(input_dim, kernel_initializer='normal', activation='relu', input_shape=(input_dim,)))
-        model.add(Dropout(0.3))
+        #model.add(Dropout(0.3))
         model.add(Dense(int(input_dim/2), kernel_initializer='normal', activation='relu'))
-        model.add(Dropout(0.2))
+        #model.add(Dropout(0.2))
         model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 
         if weights_path:
@@ -59,10 +59,10 @@ def build_model(input_dim,output_dim,type,weights_path):
 
         # Metric: binary accuracy, it calculates K.mean(K.equal(y_true, K.round(y_pred)))
         # Meaning: the mean accuracy rate across all predictions
-        opt = Adam()
-        model.compile(loss='binary_crossentropy',
-                      optimizer=opt,
-                      metrics=['binary_accuracy'])
+        # opt = Adam()
+        # model.compile(loss='binary_crossentropy',
+        #               optimizer=opt,
+        #               metrics=['binary_accuracy'])
 
     elif type == 'cnn':
         model = Sequential()
