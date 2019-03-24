@@ -1,4 +1,4 @@
 # DigiPico
-Analysis Scripts for DigiPico Sequencing
+Analysis Scripts for DigiPico Sequencing Data
 
 ## MutLX
