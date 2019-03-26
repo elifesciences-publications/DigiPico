@@ -14,14 +14,9 @@ This module contains functions used in MutLX to build the models, pre-process th
 
 """
 
-
 from __future__ import print_function
-import numpy as np
-import pandas as pd
 from sklearn.utils import shuffle
-import linecache
 from sklearn.preprocessing import StandardScaler
-import csv
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt

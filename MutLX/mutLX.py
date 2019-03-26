@@ -6,14 +6,8 @@ This module contains the main code for training and evaluating using MutLX.
 from __future__ import print_function
 import sys
 import numpy as np
-import pandas
-import sklearn
 import utils_mutLX
-import linecache
 import keras
-import tensorflow as tf
-import random as rn
-import subprocess
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
