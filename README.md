@@ -6,10 +6,11 @@ MutLX tool for accrate identification of true islet specific variants from DigiP
 
 ### Requirements
 
-* python3
-* Keras
-* tensorflow
-* sklearn
+This project has been tested on Python 3. The `requirements.txt` file contains all Python libraries that you need. They can be installed by running the following command in the project's folder:
+
+```
+pip install -r requirements.txt
+```
 
 ### Instalation
 
