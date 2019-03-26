@@ -24,8 +24,8 @@ Type column must be of any of the following categories:
 * SNP-Somatic : For known somatic mutations
 
 Example files for analysis with DigiPico can be downloaded from below links:
-* [Sample file for DigiPico run without expected islet specific variants](//)
-* [Sample file for DigiPico run with expected islet specific variants](//)
+* [Sample file for DigiPico run without expected islet specific variants](https://drive.google.com/open?id=11m_fSPoW2oqmk8H8Ffqpu2FdN9dfuyet)
+* [Sample file for DigiPico run with expected islet specific variants](https://drive.google.com/open?id=1j2LFKdEDBOrWKA2yG525jWQlfDOlTnvb)
 
 ### Running MutLX
 
