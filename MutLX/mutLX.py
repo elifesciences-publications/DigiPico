@@ -6,8 +6,14 @@ This module contains the main code for training and evaluating using MutLX.
 from __future__ import print_function
 import sys
 import numpy as np
+import pandas
+import sklearn
 import utils_mutLX
+import linecache
 import keras
+import tensorflow as tf
+import random as rn
+import subprocess
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
@@ -30,7 +36,7 @@ from keras.losses import categorical_crossentropy, logcosh
 class DropoutPrediction(object):
     """Class used to apply dropouts at test time.
 
-       Proposed by Marcin Możejko
+       Proposed by Marcin MoÅ¼ejko
 
     """
     def __init__(self, model):
@@ -58,10 +64,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, required=False, default=8, help='The batch size used for training.')
     parser.add_argument('--epochs', type=int, required=False, default=10, help='The number of epochs to train.')
-    parser.add_argument('--subset_num', type=int, required=False, default=25, help='The number of subsets.')
+    parser.add_argument('--sampling_num', type=int, required=False, default=25, help='The number of subsets.')
     parser.add_argument('--drop_it', type=int, required=False, default=100, help='The number of predictions '
                                                                                  'sampled by dropping neurons.')
-    parser.add_argument('--input', type=str, required=True, help='Path to CSV file.')
+    parser.add_argument('--pscore_cf', type=int, required=False, default=0.2, help='Cutoff value for '
+                                                                                    'probability scores.')
+    parser.add_argument('--auc_cf', type=int, required=False, default=0.9, help='Cutoff value for AUC '
+                                                                                 'to identify samples with true UTDs.')
+    parser.add_argument('--tpr_cf', type=int, required=False, default=0.95, help='The required true positive rate '
+                                                                                 'for recovery of true UTDs.')
+    parser.add_argument('--input_path', type=str, required=True, help='Path to CSV file.')
     parser.add_argument('--out_path', type=str, required=False, default='.',
                         help='The path under which to store the output.')
     parser.add_argument('--sample_name', type=str, required=False, default='DigiPico',
@@ -69,13 +81,16 @@ if __name__ == "__main__":
     # Parse command line arguments
     args = parser.parse_args()
 
-    input = args.input
+    input = args.input_path
     path = args.out_path
     sample = args.sample_name
     epochs = args.epochs
-    sampling_num = args.subset_num
+    sampling_num = args.sampling_num
     dropout_iter = args.drop_it
     batch_size = args.batch_size
+    pscore = args.pscore_cf
+    auc = args.auc_cf
+    tpr = args.tpr_cf
 
     # Set tensorboard callback
     tbCallBack = keras.callbacks.TensorBoard(log_dir=path+'/log') 
@@ -89,9 +104,7 @@ if __name__ == "__main__":
     all_set[:, 1:] = scaler.transform(all_set[:, 1:])
 
     out1 = all_set[:, 0]
-    out2_mean = all_set[:, 0]
     out2_var = all_set[:, 0]
-    out2_mean_squares = all_set[:, 0]
 
     for cnt in range(sampling_num):
 
@@ -138,36 +151,22 @@ if __name__ == "__main__":
         model_T2 = utils_mutLX.build_model(input_dim, nb_classes-1, type='ml-binary-dropout', weights_path=weights_path)
         pred_with_dropout = DropoutPrediction(model_T2)
         y_pred = pred_with_dropout.predict(all_set[:, 1:], dropout_iter)
-        out = stats.describe(y_pred, axis=1)
-        y_pred_mean = out[2]
-        y_pred_var = out[3]
-        out2_mean = np.column_stack((out2_mean, y_pred_mean))
+        y_pred_var = stats.describe(y_pred, axis=1)[3]
         out2_var = np.column_stack((out2_var, y_pred_var))
-        y_pred = np.square(y_pred)
-        y_pred_mean = stats.describe(y_pred, axis=1)[2]
-        out2_mean_squares = np.column_stack((out2_mean_squares, y_pred_mean))
 
     # Calculate final results and save
     print("Calculate final results")
-    statistical_values = stats.describe(out1[:, 1:], axis=1)
-    y_pred_mean_1 = statistical_values[2]
-    y_pred_var_1 = statistical_values[3]
-    final = np.column_stack((y_pred_mean_1, y_pred_var_1))
-    y_pred_mean_2 = stats.describe(out2_mean[:, 1:], axis=1)[2]
-    mean_of_squares = stats.describe(out2_mean_squares[:, 1:], axis=1)[2]
-    y_pred_var_2 = mean_of_squares - np.square(y_pred_mean_2)
+    y_pred_mean_1 = stats.describe(out1[:, 1:], axis=1)[2]
     y_pred_mvar = stats.describe(out2_var[:, 1:], axis=1)[2]
-    final = np.column_stack((final, y_pred_mean_2))
-    final = np.column_stack((final, y_pred_var_2))
-    final = np.column_stack((final, y_pred_mvar))
+    final = np.column_stack((y_pred_mean_1, y_pred_mvar))
 
+    # Plot and calculate thresholds
+    thr = utils_mutLX.mutLX_plots(final, neg_ind, hpos_ind, pscore, auc, tpr, path+'/'+sample)
+
+    final = np.column_stack((final, np.repeat("PASS",len(y_pred_mvar))))
+    final[final[:,1].astype(float)>thr,2] = "FAIL_Uncertain"
+    final[final[:,1].astype(float)<=pscore,2] = "FAIL_LowScore"
     save = np.column_stack((names, final))
-    header = ['Mutation', 'Type', 'Probability_Score', 'Subsets_Variance', 'Dropout_Mean','Dropout_Variance',
-              'Uncertainty_Score']
+    header = ['Mutation', 'Type', 'Probability_Score', 'Uncertainty_Score', 'Result']
     pd.DataFrame(save.astype(str)).to_csv(path+'/'+sample+'_scores.csv', header=header, index=None)
     
-    # Plot and calculate thresholds
-    thr_tpr90, thr_adaptive = utils_mutLX.mutLX_plots(final, neg_ind, hpos_ind, path+'/'+sample)
-
-    print(sample, "TPR90 Thresholds:", thr_tpr90)
-    print(sample, "Adaptive Thresholds:", thr_adaptive)
