@@ -54,11 +54,7 @@ python mutLX.py --input test1.csv --out_path test1_Results --sample_name DigiPic
 
 mutLX.py will generate a final sample_name_scores.csv file in the out_path directory with the below header as described in our manuscript:
 
-Mutation, Type, Probability_Score, Subsets_Variance, Dropout_Mean, Dropout_Variance, Uncertainty_Score
+Mutation, Type, Probability_Score, Uncertainty_Score, Result
 
-It will also print two suggested threshold values for filtering based on Probability_Score and Uncertainty_Score at the end of the standrad output file as below:
-* sample_name TPR90 Thresholds: [Probability_Score, Uncertainty_Score]
-* sample_name Adaptive Thresholds: [Probability_Score, Uncertainty_Score]
-
-TPR90 thresholds are based on a true positive rate of 90% on germline SNPs and the adaptive threshold value is calculated based on noise estimates in the data as described in our manuscript. Applying these filters to the sample_name_scores.csv generates the final MutLX output. 
+It will also generate several plots to represent the data. 
 
