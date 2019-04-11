@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                                                                  'to identify samples with true UTDs.')
     parser.add_argument('--tpr_cf', type=int, required=False, default=0.95, help='The required true positive rate '
                                                                                  'for recovery of true UTDs.')
-    parser.add_argument('--input_path', type=str, required=True, help='Path to CSV file.')
+    parser.add_argument('--input', type=str, required=True, help='Path to CSV file.')
     parser.add_argument('--out_path', type=str, required=False, default='.',
                         help='The path under which to store the output.')
     parser.add_argument('--sample_name', type=str, required=False, default='DigiPico',
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     args = parser.parse_args()
 
-    input = args.input_path
+    input_file = args.input
     path = args.out_path
     sample = args.sample_name
     epochs = args.epochs
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     tbCallBack = keras.callbacks.TensorBoard(log_dir=path+'/log') 
 
     # Load data and normalise
-    all_set, test_ind, neg_ind, pos_ind, hpos_ind, names = utils_mutLX.prep_typebased(input, cols)
+    all_set, test_ind, neg_ind, pos_ind, hpos_ind, names = utils_mutLX.prep_typebased(input_file, cols)
 
     scaler = StandardScaler()
     test_set = all_set[np.sort(np.concatenate((pos_ind,neg_ind)))]
