@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     final = np.column_stack((final, np.repeat("PASS",len(y_pred_mvar))))
     final[final[:,1].astype(float)>thr,2] = "FAIL_Uncertain"
-    final[final[:,1].astype(float)<=pscore,2] = "FAIL_LowScore"
+    final[final[:,0].astype(float)<=pscore,2] = "FAIL_LowScore"
     save = np.column_stack((names, final))
     header = ['Mutation', 'Type', 'Probability_Score', 'Uncertainty_Score', 'Result']
     pd.DataFrame(save.astype(str)).to_csv(path+'/'+sample+'_scores.csv', header=header, index=None)
