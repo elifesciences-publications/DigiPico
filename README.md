@@ -49,6 +49,9 @@ python mutLX.py --input test1.csv --out_path test1_Results --sample_name DigiPic
 * --epochs: Number of epochs in training (default = 10)
 * --subset_num: Number of training subsets to be used for training (default = 25)
 * --drop_it: Number of iterations for dropout analysis (default = 100)
+* --pscore_cf: Probability score cut-off value (default = 0.2)
+* --auc_cf: Cut-off value for area under the ROC curve to identify samples with true UTDs (default = 0.9)
+* --tpr_cf: The required true positive rate based on germline SNPs for the recovery of true UTDs (default = 0.95)
 
 ### Output
 
