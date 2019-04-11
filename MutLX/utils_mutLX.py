@@ -15,8 +15,14 @@ This module contains functions used in MutLX to build the models, pre-process th
 """
 
 from __future__ import print_function
+import numpy as np
+import pandas as pd
+import sklearn
+from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.utils import shuffle
+import linecache
 from sklearn.preprocessing import StandardScaler
+import csv
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -31,8 +37,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv1D
 from keras.optimizers import RMSprop, SGD
 from keras import regularizers
-from lmfit.models import *
-mod = GaussianModel()
+import seaborn as sns
 
 
 def iter_loadtxt(filename, usecols=None, delimiter=',', skiprows=0, dtype=np.float32):
@@ -125,160 +130,98 @@ def build_model(input_dim, output_dim, type, weights_path=''):
     return model
 
 
-def mutLX_plots(final, neg_ind, hpos_ind, out):
+def mutLX_plots(final, neg_ind, hpos_ind, minScore, auc_cf, tpr_cf, out):
 
-    data = final[neg_ind]
-    #fit Gaussia model for train subset analysis
-    x=data[:,0]
-    y=data[:,1]
-    datax = np.column_stack((x,y))
-    datax = datax[datax[:,0].argsort()]
+    neg_set = final[neg_ind]
+    pos_set = final[hpos_ind] 
+    neg_set = neg_set[neg_set[:,0]>minScore]
+    pos_set = pos_set[pos_set[:,0]>minScore]
+    thr = []
+    tpr = []
+    utd = []
+    for t in np.arange(0.25, -0.01, -0.01):
+        thr.append(t)
+        utd.append(len(neg_set[neg_set[:,1]<=t,1]))
+        tpr.append(len(pos_set[pos_set[:,1]<=t,1])/len(pos_set[:,1]))
+    fpr = np.array(utd[:])/utd[0]
+    roc_auc = auc(fpr, tpr)
 
-    # calculate the height of fitted normal model as an estimate of true UTD frequency
-    pars = mod.guess(datax[:,1], x=datax[:,0])
-    result = mod.fit(datax[:,1], pars, x=datax[:,0])
-    h = result.params['height'].value
-
-    plt.figure()
-    plt.scatter(data[:,0], data[:,1], c='c', s=10, alpha=0.3)
-    plt.xlim([-0.1, 1.2])
-    plt.ylim([-0.005, 0.15])
-    plt.plot(datax[:,0], result.best_fit, 'r-')
-    plt.xlabel('Probability Score')
-    plt.ylabel('Variance in probability values')
-    plt.savefig(out + "_train_subset_analysis.png")
-
-    data = data[data[:,2]>0,]
-    plt.figure()
-    plt.scatter(data[:,2], data[:,3]/data[:,2], c='c', s=10, alpha=0.3)
-    plt.xlim([-0.1, 1.2])
-    plt.ylim([-0.005, 0.7])
-    plt.xlabel('Mean of dropout probability values')
-    plt.ylabel('Stdev of dropout probability values')
-    plt.savefig(out + "_test_dropout_analysis.png")
-
-    # Dispersion of adjusted merge dropouts as a measure of model uncertainty
-    data = data[data[:,3]/data[:,2]<0.2]
-    data = data[data[:,3]/data[:,2]>0.1]
-    adjM = data[:,2] + data[:,3]/data[:,2]
-
-    # Mean of drop-out variances also as a measure of model uncertainty
-    data = final[final[:,0]>0.7,]
-    data = data[data[:,0]<0.9,]
-    MV=np.percentile(data[:,4],30)
-
-    data = final[neg_ind]
-    data = data[data[:,0]>0.9,]
-    stat = stats.describe(data[:,4])
-
-    h95_OK = 0
-    data = final[hpos_ind]
-    hG95 = np.percentile(data[:,4],95)
-    data = final[neg_ind]
-    data = data[data[:,0]>0.9,]
-    data = data[data[:,4]<hG95,]
-    if np.percentile(data[:,4],25) < 0.025:
-        h95_OK = 1
-
-    if h >= 0.05:
-        msthr = 0.8
-    elif h <= 0.04:
-        msthr = 0.7
+    cf = 0
+    if roc_auc > auc_cf:
+        # Compute the intersection of threshold and rates
+        i=0
+        while cf == 0:
+            if 1-4*thr[i] > tpr[i]:
+                cf = (thr[i]+old_thr)/2
+            else:
+                old_thr=thr[i]
+            i += 1
     else:
-        msthr = 10 * h + 0.3
-
-    if np.percentile(adjM,10) >= 0.8:
-        minScore = 0.8
-    elif np.percentile(adjM,10) <= 0.6:
-        minScore = 0.2
-    else:
-        minScore = 3 * np.percentile(adjM,10) - 1.6
-
-    if MV < 0.1:
-    # This suggests a likely high frequency true UTD
-        if np.percentile(adjM,10) < msthr:
-            thr = 0.2
-        else:
-            minScore = 0.95
-            thr = 0.01
-    elif h95_OK == 1:
-        minScore = 0.9
-        thr = hG95
-    else:
-        minScore = 0.8
-        if h > 0.085:
-            thr = 0.2
-        elif h > 0.07:
-            thr = 0.1
-        elif h > 0.06:
-            thr = 1.5*h-0.08
-        else:
-            thr = 0.01
-
-    if np.percentile(data[:,4],25) > 0.05 or (np.percentile(data[:,4],25) > 0.04 and stat[4] < 0):
-        thr = 0.09
-
-    data = final[hpos_ind]
-    if np.percentile(data[:,4],80) > thr:
-        thr = np.percentile(data[:,4],80)
-        minScore = 0.99
-
-    thr_adaptive = [minScore, thr]
+        i = len(tpr) - 1
+        while cf == 0:
+            if tpr[i] >= tpr_cf:
+                cf = (thr[i]+old_thr)/2
+            else:
+                old_thr=thr[i]
+            i -= 1    
 
     mpl.rcParams['axes.linewidth'] = 3
 
-    data = final[neg_ind]
-    b="grey"
+    data = np.column_stack((final, np.repeat("SNP",len(final[:,0]))))
+    data[neg_ind,2] = "UTDs"
+    data[hpos_ind,2] = "Germline SNPs"
+    SNPs=["UTDs","Germline SNPs"]
     plt.figure()
-    plt.scatter(data[:,4], data[:,0], c=b, s=20, alpha=0.3)
+    for SNP in SNPs:
+        subset = data[data[:,2] == SNP]
+        sns.distplot(subset[:,0].astype(float),hist=False,kde = True,kde_kws={'shade': True, 'linewidth': 3,'clip': (0,1)},label=SNP)
+    axes = plt.gca()
+    ymin, ymax = axes.get_ylim()
+    plt.ylim([-0.1, ymax])
+    plt.xlim([-0.02, 1.02])
+    plt.xlabel('Probability score')
+    plt.ylabel('Density')
+    plt.plot([minScore, minScore], [0, ymax+2], 'r--', linewidth=2)
+    plt.legend(loc=1,bbox_to_anchor=(0.96, 1))
+    plt.savefig(out + "_Probability_Score.png")
+
+    plt.figure()
+    plt.plot(utd, tpr, label='ROC curve (area = %0.2f)' % roc_auc, linewidth=3)
+    plt.xlim([0.0, np.amax(utd)])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('Number of passed UTDs (False Positives)')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right", prop={'size': 18})
+    # create the axis of thresholds (scores)
+    ax2 = plt.gca().twinx()
+    ax2.plot(utd, thr, markeredgecolor='r', linestyle='dashed', color='r', linewidth=3)
+    ax2.set_ylabel('Drop-out variance threshold', color='r')
+    ax2.set_ylim([0.25,0])
+    ax2.set_xlim([0.0, np.amax(utd)])
+    plt.savefig(out + "_ROC.png")
+
+    data = final[neg_ind]
+    plt.figure()
+    plt.scatter(data[:,1], data[:,0], c='grey', s=20, alpha=0.3)
     plt.xlim([-0.01, 0.21])
     plt.ylim([-0.01, 1.02])
     plt.plot([-0.01, 0.22], [minScore, minScore], 'r--', linewidth=2)
-    plt.plot([thr, thr], [-0.2, 1.1], 'r--', linewidth=2)
+    plt.plot([cf, cf], [-0.2, 1.1], 'r--', linewidth=2)
     plt.xlabel('Uncertainty Score')
     plt.ylabel('Probability Score')
-    plt.savefig(out + "_UTD_adaptive.png")
+    plt.savefig(out + "_UTDs.png")
 
     data = final[hpos_ind]
     np.random.shuffle(data)
-    b='b'
     plt.figure()
-    plt.scatter(data[:1000,4], data[:1000,0], c=b, s=20, alpha=0.3)
+    plt.scatter(data[:1000,1], data[:1000,0], c='b', s=20, alpha=0.3)
     plt.xlim([-0.01, 0.21])
     plt.ylim([-0.01, 1.02])
     plt.plot([-0.01, 0.22], [minScore, minScore], 'r--', linewidth=2)
-    plt.plot([thr, thr], [-0.2, 1.1], 'r--', linewidth=2)
+    plt.plot([cf, cf], [-0.2, 1.1], 'r--', linewidth=2)
     plt.xlabel('Uncertainty Score')
     plt.ylabel('Probability Score')
-    plt.savefig(out + "_Germline_adaptive.png")
+    plt.savefig(out + "_Germline.png")
 
-    thr=np.percentile(data[:,4],90)
-    minScore=0.8
-    thr_tpr90 = [minScore, thr]
-
-    data = final[neg_ind]
-    b="grey"
-    plt.figure()
-    plt.scatter(data[:,4], data[:,0], c=b, s=20, alpha=0.3)
-    plt.xlim([-0.01, 0.21])
-    plt.ylim([-0.01, 1.02])
-    plt.plot([-0.01, 0.22], [minScore, minScore], 'r--', linewidth=2)
-    plt.plot([thr, thr], [-0.2, 1.1], 'r--', linewidth=2)
-    plt.xlabel('Uncertainty Score')
-    plt.ylabel('Probability Score')
-    plt.savefig(out + "_UTD_tpr90.png")
-
-    data = final[hpos_ind]
-    np.random.shuffle(data)
-    b='b'
-    plt.figure()
-    plt.scatter(data[:1000,4], data[:1000,0], c=b, s=20, alpha=0.3)
-    plt.xlim([-0.01, 0.21])
-    plt.ylim([-0.01, 1.02])
-    plt.plot([-0.01, 0.22], [minScore, minScore], 'r--', linewidth=2)
-    plt.plot([thr, thr], [-0.2, 1.1], 'r--', linewidth=2)
-    plt.xlabel('Uncertainty Score')
-    plt.ylabel('Probability Score')
-    plt.savefig(out + "_Germline_tpr90.png")
-
-    return thr_tpr90, thr_adaptive
+    return cf
