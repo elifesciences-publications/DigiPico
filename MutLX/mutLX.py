@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                                                                  'to identify samples with true UTDs.')
     parser.add_argument('--tpr_cf', type=int, required=False, default=0.95, help='The required true positive rate '
                                                                                  'for recovery of true UTDs.')
-    parser.add_argument('--input', type=str, required=True, help='Path to CSV file.')
+    parser.add_argument('--input_path', type=str, required=True, help='Path to CSV file.')
     parser.add_argument('--out_path', type=str, required=False, default='.',
                         help='The path under which to store the output.')
     parser.add_argument('--sample_name', type=str, required=False, default='DigiPico',
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     args = parser.parse_args()
 
-    input_file = args.input
+    input = args.input_path
     path = args.out_path
     sample = args.sample_name
     epochs = args.epochs
@@ -92,11 +92,8 @@ if __name__ == "__main__":
     auc = args.auc_cf
     tpr = args.tpr_cf
 
-    # Set tensorboard callback
-    tbCallBack = keras.callbacks.TensorBoard(log_dir=path+'/log') 
-
     # Load data and normalise
-    all_set, test_ind, neg_ind, pos_ind, hpos_ind, names = utils_mutLX.prep_typebased(input_file, cols)
+    all_set, test_ind, neg_ind, pos_ind, hpos_ind, names = utils_mutLX.prep_typebased(input, cols)
 
     scaler = StandardScaler()
     test_set = all_set[np.sort(np.concatenate((pos_ind,neg_ind)))]
@@ -107,6 +104,9 @@ if __name__ == "__main__":
     out2_var = all_set[:, 0]
 
     for cnt in range(sampling_num):
+
+        # Set tensorboard callback
+        tbCallBack = keras.callbacks.TensorBoard(log_dir=path+'/log') 
 
         # Prepare training subset for level 1 training
         np.random.seed(cnt+1)
@@ -133,6 +133,11 @@ if __name__ == "__main__":
         TPs_subset = np.random.choice(TPs, len(TNs), replace=0)
         train_set = test_set[np.sort(np.concatenate((TPs_subset, TNs)))]
 
+        K.clear_session()
+
+        # Set tensorboard callback
+        tbCallBack = keras.callbacks.TensorBoard(log_dir=path+'/log') 
+
         # Level 2 training and test
         print ("Level 2 training: subset ", cnt+1)
         model_L2 = utils_mutLX.build_model(input_dim, nb_classes - 1, type='ml-binary')
@@ -153,6 +158,8 @@ if __name__ == "__main__":
         y_pred = pred_with_dropout.predict(all_set[:, 1:], dropout_iter)
         y_pred_var = stats.describe(y_pred, axis=1)[3]
         out2_var = np.column_stack((out2_var, y_pred_var))
+
+        K.clear_session()
 
     # Calculate final results and save
     print("Calculate final results")
