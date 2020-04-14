@@ -63,5 +63,4 @@ It will also generate several plots to represent the data.
 
 ### Publication
 This analysis refers to the following publication: 
-Mohammad KaramiNejadRanjbar, Sahand Sharifzadeh, Nina C Wietek, Mara Artibani, Salma El-Sahhar, Tatjana Sauka-Spengler, Christopher Yau, Volker Tresp, Ahmed A Ahmed 
-A highly accurate platform for clone-specific mutation discovery enables the study of active mutational processes. Available at 10.7554/eLife.55207, eLife, 2020."
+Mohammad KaramiNejadRanjbar, Sahand Sharifzadeh, Nina C Wietek, Mara Artibani, Salma El-Sahhar, Tatjana Sauka-Spengler, Christopher Yau, Volker Tresp, Ahmed A Ahmed. A highly accurate platform for clone-specific mutation discovery enables the study of active mutational processes. Available at 10.7554/eLife.55207, eLife, 2020."
